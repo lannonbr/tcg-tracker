@@ -6,6 +6,10 @@ export default defineSchema({
     groupId: v.number(),
     storageId: v.id('_storage'),
   }),
+  products: defineTable({
+    groupId: v.number(),
+    storageId: v.id('_storage'),
+  }),
   categories: defineTable({
     categoryId: v.number(),
     name: v.string(),

@@ -10,18 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DemoConvexRouteImport } from './routes/demo/convex'
 import { Route as DemoSetsIndexRouteImport } from './routes/demo/sets.index'
 import { Route as DemoSetsCategoryIdRouteImport } from './routes/demo/sets.$categoryId'
+import { Route as DemoProductsGroupIdRouteImport } from './routes/demo/products.$groupId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoConvexRoute = DemoConvexRouteImport.update({
-  id: '/demo/convex',
-  path: '/demo/convex',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoSetsIndexRoute = DemoSetsIndexRouteImport.update({
@@ -34,42 +29,51 @@ const DemoSetsCategoryIdRoute = DemoSetsCategoryIdRouteImport.update({
   path: '/demo/sets/$categoryId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DemoProductsGroupIdRoute = DemoProductsGroupIdRouteImport.update({
+  id: '/demo/products/$groupId',
+  path: '/demo/products/$groupId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/demo/convex': typeof DemoConvexRoute
+  '/demo/products/$groupId': typeof DemoProductsGroupIdRoute
   '/demo/sets/$categoryId': typeof DemoSetsCategoryIdRoute
   '/demo/sets/': typeof DemoSetsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/demo/convex': typeof DemoConvexRoute
+  '/demo/products/$groupId': typeof DemoProductsGroupIdRoute
   '/demo/sets/$categoryId': typeof DemoSetsCategoryIdRoute
   '/demo/sets': typeof DemoSetsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/demo/convex': typeof DemoConvexRoute
+  '/demo/products/$groupId': typeof DemoProductsGroupIdRoute
   '/demo/sets/$categoryId': typeof DemoSetsCategoryIdRoute
   '/demo/sets/': typeof DemoSetsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/demo/convex' | '/demo/sets/$categoryId' | '/demo/sets/'
+  fullPaths:
+    | '/'
+    | '/demo/products/$groupId'
+    | '/demo/sets/$categoryId'
+    | '/demo/sets/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/demo/convex' | '/demo/sets/$categoryId' | '/demo/sets'
+  to: '/' | '/demo/products/$groupId' | '/demo/sets/$categoryId' | '/demo/sets'
   id:
     | '__root__'
     | '/'
-    | '/demo/convex'
+    | '/demo/products/$groupId'
     | '/demo/sets/$categoryId'
     | '/demo/sets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DemoConvexRoute: typeof DemoConvexRoute
+  DemoProductsGroupIdRoute: typeof DemoProductsGroupIdRoute
   DemoSetsCategoryIdRoute: typeof DemoSetsCategoryIdRoute
   DemoSetsIndexRoute: typeof DemoSetsIndexRoute
 }
@@ -81,13 +85,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/convex': {
-      id: '/demo/convex'
-      path: '/demo/convex'
-      fullPath: '/demo/convex'
-      preLoaderRoute: typeof DemoConvexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/sets/': {
@@ -104,12 +101,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoSetsCategoryIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo/products/$groupId': {
+      id: '/demo/products/$groupId'
+      path: '/demo/products/$groupId'
+      fullPath: '/demo/products/$groupId'
+      preLoaderRoute: typeof DemoProductsGroupIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DemoConvexRoute: DemoConvexRoute,
+  DemoProductsGroupIdRoute: DemoProductsGroupIdRoute,
   DemoSetsCategoryIdRoute: DemoSetsCategoryIdRoute,
   DemoSetsIndexRoute: DemoSetsIndexRoute,
 }

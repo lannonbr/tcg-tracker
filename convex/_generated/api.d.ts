@@ -9,6 +9,7 @@
  */
 
 import type * as categories from "../categories.js";
+import type * as products from "../products.js";
 import type * as sets from "../sets.js";
 
 import type {
@@ -19,6 +20,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   categories: typeof categories;
+  products: typeof products;
   sets: typeof sets;
 }>;
 
