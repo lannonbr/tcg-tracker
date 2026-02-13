@@ -1,0 +1,22 @@
+layout {
+    pane size=1 borderless=true {
+        plugin location="zellij:tab-bar"
+    }
+    pane split_direction="horizontal" {
+        pane command="docker" cwd="convex-backend" {
+            args "compose" "up"
+            
+        }
+        pane split_direction="vertical" {
+            pane command="npx" {
+                args "convex" "dev"
+            }
+            pane command="npm" {
+                args "run" "dev"
+            }
+        }
+    }
+    pane size=2 borderless=true {
+        plugin location="zellij:status-bar"
+    }
+}
