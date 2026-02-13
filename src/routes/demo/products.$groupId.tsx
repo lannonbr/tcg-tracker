@@ -42,7 +42,11 @@ function RouteComponent() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {products
-          .filter((product: any) => product?.prices?.marketPrice)
+          .filter(
+            (product: any) =>
+              product?.prices?.marketPrice &&
+              product.extendedData?.find((item: any) => item.name === 'Number'),
+          )
           .sort((a: any, b: any) => b.prices.marketPrice - a.prices.marketPrice)
           .slice(0, 3)
           .map((product: any, index: number) => (
