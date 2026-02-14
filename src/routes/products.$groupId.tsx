@@ -11,13 +11,13 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-export const Route = createFileRoute('/demo/products/$groupId')({
+export const Route = createFileRoute('/products/$groupId')({
   component: RouteComponent,
   ssr: false,
 })
 
 function RouteComponent() {
-  const { groupId } = useParams({ from: '/demo/products/$groupId' })
+  const { groupId } = useParams({ from: '/products/$groupId' })
 
   const fileUrl = useQuery(api.products.getProductUrl, {
     groupId: Number(groupId),

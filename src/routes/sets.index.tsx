@@ -2,7 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import { useQuery } from 'convex/react'
 
-export const Route = createFileRoute('/demo/sets/')({
+export const Route = createFileRoute('/sets/')({
   component: RouteComponent,
   ssr: false,
 })
@@ -20,7 +20,7 @@ function RouteComponent() {
           <li key={category.categoryId}>
             <Link
               className="hover:underline"
-              to="/demo/sets/$categoryId"
+              to="/sets/$categoryId"
               params={{ categoryId: category.categoryId.toString() }}
             >
               {category.displayName}

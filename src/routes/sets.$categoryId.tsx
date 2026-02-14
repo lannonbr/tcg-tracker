@@ -1,16 +1,16 @@
-import { createFileRoute, useParams } from '@tanstack/react-router'
+import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import { useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 
-export const Route = createFileRoute('/demo/sets/$categoryId')({
+export const Route = createFileRoute('/sets/$categoryId')({
   ssr: false,
   component: ConvexSets,
 })
 
 function ConvexSets() {
-  let { categoryId } = useParams({ from: '/demo/sets/$categoryId' })
+  let { categoryId } = useParams({ from: '/sets/$categoryId' })
 
   const fileUrl = useQuery(api.sets.getSetUrl, { groupId: Number(categoryId) })
   const [setListing, setSetListing] = useState<Record<string, any> | null>(null)
@@ -32,12 +32,16 @@ function ConvexSets() {
       <h2 className="text-xl m-4">Sets for Group {categoryId}</h2>
       <ul>
         {setListing.results.map(
-          (set: { name: string; publishedOn: string }) => {
-            console.log(set)
+          (set: { name: string; publishedOn: string; groupId: number }) => {
             return (
               <li className="list-disc ml-8">
-                {set.name} (Released:{' '}
-                {dayjs(set.publishedOn).format('MMM DD, YYYY')})
+                <Link
+                  to="/products/$groupId"
+                  params={{ groupId: set.groupId.toString() }}
+                >
+                  {set.name}
+                </Link>
+                (Released: {dayjs(set.publishedOn).format('MMM DD, YYYY')})
               </li>
             )
           },

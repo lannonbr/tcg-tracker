@@ -10,72 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DemoSetsIndexRouteImport } from './routes/demo/sets.index'
-import { Route as DemoSetsCategoryIdRouteImport } from './routes/demo/sets.$categoryId'
-import { Route as DemoProductsGroupIdRouteImport } from './routes/demo/products.$groupId'
+import { Route as SetsIndexRouteImport } from './routes/sets.index'
+import { Route as SetsCategoryIdRouteImport } from './routes/sets.$categoryId'
+import { Route as ProductsGroupIdRouteImport } from './routes/products.$groupId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoSetsIndexRoute = DemoSetsIndexRouteImport.update({
-  id: '/demo/sets/',
-  path: '/demo/sets/',
+const SetsIndexRoute = SetsIndexRouteImport.update({
+  id: '/sets/',
+  path: '/sets/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoSetsCategoryIdRoute = DemoSetsCategoryIdRouteImport.update({
-  id: '/demo/sets/$categoryId',
-  path: '/demo/sets/$categoryId',
+const SetsCategoryIdRoute = SetsCategoryIdRouteImport.update({
+  id: '/sets/$categoryId',
+  path: '/sets/$categoryId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoProductsGroupIdRoute = DemoProductsGroupIdRouteImport.update({
-  id: '/demo/products/$groupId',
-  path: '/demo/products/$groupId',
+const ProductsGroupIdRoute = ProductsGroupIdRouteImport.update({
+  id: '/products/$groupId',
+  path: '/products/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/demo/products/$groupId': typeof DemoProductsGroupIdRoute
-  '/demo/sets/$categoryId': typeof DemoSetsCategoryIdRoute
-  '/demo/sets/': typeof DemoSetsIndexRoute
+  '/products/$groupId': typeof ProductsGroupIdRoute
+  '/sets/$categoryId': typeof SetsCategoryIdRoute
+  '/sets/': typeof SetsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/demo/products/$groupId': typeof DemoProductsGroupIdRoute
-  '/demo/sets/$categoryId': typeof DemoSetsCategoryIdRoute
-  '/demo/sets': typeof DemoSetsIndexRoute
+  '/products/$groupId': typeof ProductsGroupIdRoute
+  '/sets/$categoryId': typeof SetsCategoryIdRoute
+  '/sets': typeof SetsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/demo/products/$groupId': typeof DemoProductsGroupIdRoute
-  '/demo/sets/$categoryId': typeof DemoSetsCategoryIdRoute
-  '/demo/sets/': typeof DemoSetsIndexRoute
+  '/products/$groupId': typeof ProductsGroupIdRoute
+  '/sets/$categoryId': typeof SetsCategoryIdRoute
+  '/sets/': typeof SetsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/demo/products/$groupId'
-    | '/demo/sets/$categoryId'
-    | '/demo/sets/'
+  fullPaths: '/' | '/products/$groupId' | '/sets/$categoryId' | '/sets/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/demo/products/$groupId' | '/demo/sets/$categoryId' | '/demo/sets'
-  id:
-    | '__root__'
-    | '/'
-    | '/demo/products/$groupId'
-    | '/demo/sets/$categoryId'
-    | '/demo/sets/'
+  to: '/' | '/products/$groupId' | '/sets/$categoryId' | '/sets'
+  id: '__root__' | '/' | '/products/$groupId' | '/sets/$categoryId' | '/sets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DemoProductsGroupIdRoute: typeof DemoProductsGroupIdRoute
-  DemoSetsCategoryIdRoute: typeof DemoSetsCategoryIdRoute
-  DemoSetsIndexRoute: typeof DemoSetsIndexRoute
+  ProductsGroupIdRoute: typeof ProductsGroupIdRoute
+  SetsCategoryIdRoute: typeof SetsCategoryIdRoute
+  SetsIndexRoute: typeof SetsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -87,25 +78,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/sets/': {
-      id: '/demo/sets/'
-      path: '/demo/sets'
-      fullPath: '/demo/sets/'
-      preLoaderRoute: typeof DemoSetsIndexRouteImport
+    '/sets/': {
+      id: '/sets/'
+      path: '/sets'
+      fullPath: '/sets/'
+      preLoaderRoute: typeof SetsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/sets/$categoryId': {
-      id: '/demo/sets/$categoryId'
-      path: '/demo/sets/$categoryId'
-      fullPath: '/demo/sets/$categoryId'
-      preLoaderRoute: typeof DemoSetsCategoryIdRouteImport
+    '/sets/$categoryId': {
+      id: '/sets/$categoryId'
+      path: '/sets/$categoryId'
+      fullPath: '/sets/$categoryId'
+      preLoaderRoute: typeof SetsCategoryIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/products/$groupId': {
-      id: '/demo/products/$groupId'
-      path: '/demo/products/$groupId'
-      fullPath: '/demo/products/$groupId'
-      preLoaderRoute: typeof DemoProductsGroupIdRouteImport
+    '/products/$groupId': {
+      id: '/products/$groupId'
+      path: '/products/$groupId'
+      fullPath: '/products/$groupId'
+      preLoaderRoute: typeof ProductsGroupIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -113,9 +104,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DemoProductsGroupIdRoute: DemoProductsGroupIdRoute,
-  DemoSetsCategoryIdRoute: DemoSetsCategoryIdRoute,
-  DemoSetsIndexRoute: DemoSetsIndexRoute,
+  ProductsGroupIdRoute: ProductsGroupIdRoute,
+  SetsCategoryIdRoute: SetsCategoryIdRoute,
+  SetsIndexRoute: SetsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
