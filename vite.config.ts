@@ -9,7 +9,6 @@ import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
 const config = defineConfig({
-  base: process.env.TCG_BASE_PATH,
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

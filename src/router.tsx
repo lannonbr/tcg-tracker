@@ -8,7 +8,6 @@ export const getRouter = () => {
   const router = createRouter({
     routeTree,
     context: {},
-    basepath: process.env.TCG_BASE_PATH,
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
   })
