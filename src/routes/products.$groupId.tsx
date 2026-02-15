@@ -1,4 +1,4 @@
-import { createFileRoute, useParams } from '@tanstack/react-router'
+import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import { useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
@@ -10,6 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { ProductData } from 'convex/products'
+import { ArrowLeft } from 'lucide-react'
 
 export const Route = createFileRoute('/products/$groupId')({
   component: RouteComponent,
@@ -19,10 +21,14 @@ export const Route = createFileRoute('/products/$groupId')({
 function RouteComponent() {
   const { groupId } = useParams({ from: '/products/$groupId' })
 
+  const product = useQuery(api.products.getProduct, {
+    groupId: Number(groupId),
+  })!
+
   const fileUrl = useQuery(api.products.getProductUrl, {
     groupId: Number(groupId),
   })
-  const [products, setProducts] = useState<Record<string, any> | null>(null)
+  const [products, setProducts] = useState<ProductData[]>([])
 
   useEffect(() => {
     if (!fileUrl) return
@@ -38,7 +44,19 @@ function RouteComponent() {
 
   return (
     <div className="container mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-4">Top Products</h2>
+      <p className="inline-flex rounded-xl bg-violet-400 hover:bg-violet-500 p-2 mb-4">
+        <ArrowLeft />
+        <Link
+          to="/sets/$categoryId"
+          params={{ categoryId: product[0].categoryId.toString() }}
+        >
+          Back to Card game listing
+        </Link>{' '}
+      </p>
+
+      <h2 className="text-2xl font-bold mb-4">
+        Top Products for {product[0].name}
+      </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {products

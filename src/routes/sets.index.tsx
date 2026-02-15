@@ -13,9 +13,9 @@ function RouteComponent() {
   if (!categories) return
 
   return (
-    <div className="p-4">
-      <h1 className="mb-4 text-2xl font-bold">Categories</h1>
-      <ul className="grid grid-cols-4 gap-2">
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4">Categories</h1>
+      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
         {categories.map((category) => (
           <li key={category.categoryId}>
             <Link

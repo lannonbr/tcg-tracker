@@ -12,7 +12,7 @@ type PriceData = {
   subTypeName: string
 }
 
-type ProductData = {
+export type ProductData = {
   productId: number
   name: string
   cleanName: string
@@ -35,9 +35,27 @@ type ProductData = {
   prices: PriceData | undefined
 }
 
+type Group = {
+  groupId: number
+  name: string
+  abbreviation: string
+  isSupplemental: boolean
+  publishedOn: string
+  modifiedOn: string
+  categoryId: number
+}
+
 export const fetchProducts = action({
   args: { categoryId: v.number(), groupId: v.number() },
   handler: async (ctx, args) => {
+    const groupsData = await fetch(
+      `https://tcgcsv.com/tcgplayer/${args.categoryId}/groups`,
+    ).then((resp) => resp.json())
+
+    let name = groupsData.results.find(
+      (group: Group) => group.groupId === args.groupId,
+    ).name
+
     const productsData = await fetch(
       `https://tcgcsv.com/tcgplayer/${args.categoryId}/${args.groupId}/products`,
     ).then((resp) => resp.json())
@@ -61,7 +79,9 @@ export const fetchProducts = action({
     const storageId = await ctx.storage.store(blob)
 
     await ctx.runMutation(api.products.saveProducts, {
+      categoryId: args.categoryId,
       groupId: args.groupId,
+      name: name,
       storageId,
     })
   },
@@ -69,12 +89,16 @@ export const fetchProducts = action({
 
 export const saveProducts = mutation({
   args: {
+    categoryId: v.number(),
     groupId: v.number(),
+    name: v.string(),
     storageId: v.id('_storage'),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert('products', {
+      categoryId: args.categoryId,
       groupId: args.groupId,
+      name: args.name,
       storageId: args.storageId,
     })
   },

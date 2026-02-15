@@ -2,18 +2,20 @@ import { action, mutation, query } from './_generated/server'
 import { api } from './_generated/api'
 import { v } from 'convex/values'
 
-export const fetchSet = action({
-  args: { groupId: v.number() },
+export const fetchSets = action({
+  args: { categoryId: v.number() },
   handler: async (ctx, args) => {
-    const set = await ctx.runQuery(api.sets.getSet, { groupId: args.groupId })
+    const set = await ctx.runQuery(api.sets.getSets, {
+      categoryId: args.categoryId,
+    })
 
     if (set.length != 1) {
       const data = await fetch(
-        `https://tcgcsv.com/tcgplayer/${args.groupId}/groups`,
+        `https://tcgcsv.com/tcgplayer/${args.categoryId}/groups`,
       ).then((resp) => resp.blob())
       const storageId = await ctx.storage.store(data)
-      await ctx.runMutation(api.sets.saveSet, {
-        groupId: args.groupId,
+      await ctx.runMutation(api.sets.saveSets, {
+        categoryId: args.categoryId,
         storageId,
       })
     } else {
@@ -22,32 +24,32 @@ export const fetchSet = action({
   },
 })
 
-export const saveSet = mutation({
-  args: { groupId: v.number(), storageId: v.id('_storage') },
+export const saveSets = mutation({
+  args: { categoryId: v.number(), storageId: v.id('_storage') },
   handler: async (ctx, args) => {
     await ctx.db.insert('sets', {
-      groupId: args.groupId,
+      categoryId: args.categoryId,
       storageId: args.storageId,
     })
   },
 })
 
-export const getSet = query({
-  args: { groupId: v.number() },
+export const getSets = query({
+  args: { categoryId: v.number() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query('sets')
-      .filter((q) => q.eq(q.field('groupId'), args.groupId))
+      .filter((q) => q.eq(q.field('categoryId'), args.categoryId))
       .collect()
   },
 })
 
-export const getSetUrl = query({
-  args: { groupId: v.number() },
+export const getSetsUrl = query({
+  args: { categoryId: v.number() },
   handler: async (ctx, args) => {
     let results = await ctx.db
       .query('sets')
-      .filter((q) => q.eq(q.field('groupId'), args.groupId))
+      .filter((q) => q.eq(q.field('categoryId'), args.categoryId))
       .collect()
 
     let url = await ctx.storage.getUrl(results[0].storageId)

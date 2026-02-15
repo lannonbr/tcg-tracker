@@ -54,6 +54,16 @@ export const getCategories = query({
   },
 })
 
+export const getCategory = query({
+  args: { categoryId: v.number() },
+  handler(ctx, args) {
+    return ctx.db
+      .query('categories')
+      .filter((q) => q.eq(q.field('categoryId'), args.categoryId))
+      .collect()
+  },
+})
+
 export const fetchCategories = action({
   args: {},
   handler: async (ctx) => {

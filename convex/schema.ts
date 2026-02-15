@@ -3,11 +3,13 @@ import { v } from 'convex/values'
 
 export default defineSchema({
   sets: defineTable({
-    groupId: v.number(),
+    categoryId: v.number(),
     storageId: v.id('_storage'),
   }),
   products: defineTable({
+    categoryId: v.number(),
     groupId: v.number(),
+    name: v.string(),
     storageId: v.id('_storage'),
   }),
   categories: defineTable({
