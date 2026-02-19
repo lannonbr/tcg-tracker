@@ -2,7 +2,7 @@ import { action, mutation, query } from './_generated/server'
 import { api } from './_generated/api'
 import { v } from 'convex/values'
 
-type Category = {
+export type Category = {
   categoryId: number
   name: string
   modifiedOn: string

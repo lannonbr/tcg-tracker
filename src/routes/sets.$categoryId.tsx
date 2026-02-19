@@ -3,7 +3,13 @@ import { api } from 'convex/_generated/api'
 import { useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
-import { ArrowLeft } from 'lucide-react'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 
 export const Route = createFileRoute('/sets/$categoryId')({
   ssr: false,
@@ -12,6 +18,10 @@ export const Route = createFileRoute('/sets/$categoryId')({
 
 function ConvexSets() {
   let { categoryId } = useParams({ from: '/sets/$categoryId' })
+
+  const set = useQuery(api.sets.getSets, {
+    categoryId: Number(categoryId),
+  })!
 
   const fileUrl = useQuery(api.sets.getSetsUrl, {
     categoryId: Number(categoryId),
@@ -27,17 +37,39 @@ function ConvexSets() {
       .catch((err) => console.error('Failed to fetch file:', err))
   }, [fileUrl])
 
+  if (!set) return <div>Loading...</div>
   if (!fileUrl) return <div>Loading URL...</div>
   if (!setListing) return <div>Loading file...</div>
 
   return (
     <div className="container mx-auto p-6">
-      <p className="inline-flex rounded-xl bg-violet-400 hover:bg-violet-500 p-2 mb-4">
-        <ArrowLeft />
-        <Link to="/sets">Back to Card games listing</Link>
-      </p>
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <Link
+              to="/"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <Link
+              to="/sets"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Card games
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Game: {set[0].name}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
-      <h2 className="text-2xl font-bold mb-4">Sets for Group {categoryId}</h2>
+      <h2 className="text-2xl font-bold mb-4">Sets for {set[0].name}</h2>
       <ul className="">
         {setListing.results.map(
           (set: { name: string; publishedOn: string; groupId: number }) => {

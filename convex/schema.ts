@@ -4,6 +4,7 @@ import { v } from 'convex/values'
 export default defineSchema({
   sets: defineTable({
     categoryId: v.number(),
+    name: v.string(),
     storageId: v.id('_storage'),
   }),
   products: defineTable({

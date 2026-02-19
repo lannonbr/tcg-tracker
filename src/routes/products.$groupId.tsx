@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
-import { useQuery } from 'convex/react'
+import { useQueries, useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
 import {
   Table,
@@ -11,7 +11,13 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ProductData } from 'convex/products'
-import { ArrowLeft } from 'lucide-react'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 
 export const Route = createFileRoute('/products/$groupId')({
   component: RouteComponent,
@@ -24,6 +30,11 @@ function RouteComponent() {
   const product = useQuery(api.products.getProduct, {
     groupId: Number(groupId),
   })!
+
+  const set = useQuery(
+    api.sets.getSets,
+    product ? { categoryId: Number(product[0].categoryId) } : 'skip',
+  )
 
   const fileUrl = useQuery(api.products.getProductUrl, {
     groupId: Number(groupId),
@@ -39,20 +50,47 @@ function RouteComponent() {
       .catch((err) => console.error('Failed to fetch file:', err))
   }, [fileUrl])
 
+  if (!product || !set) return <div>Loading...</div>
   if (!fileUrl) return <div>Loading URL...</div>
   if (!products) return <div>Loading file...</div>
 
   return (
     <div className="container mx-auto p-6">
-      <p className="inline-flex rounded-xl bg-violet-400 hover:bg-violet-500 p-2 mb-4">
-        <ArrowLeft />
-        <Link
-          to="/sets/$categoryId"
-          params={{ categoryId: product[0].categoryId.toString() }}
-        >
-          Back to Card game listing
-        </Link>{' '}
-      </p>
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <Link
+              to="/"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Home
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <Link
+              to="/sets"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Card games
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <Link
+              to="/sets/$categoryId"
+              params={{ categoryId: product[0].categoryId.toString() }}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Game: {set[0].name}
+            </Link>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Set: {product[0].name}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       <h2 className="text-2xl font-bold mb-4">
         Top Products for {product[0].name}

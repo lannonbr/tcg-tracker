@@ -1,10 +1,19 @@
 import { action, mutation, query } from './_generated/server'
 import { api } from './_generated/api'
 import { v } from 'convex/values'
+import { Category } from './categories'
 
 export const fetchSets = action({
   args: { categoryId: v.number() },
   handler: async (ctx, args) => {
+    const categories = await fetch(
+      `https://tcgcsv.com/tcgplayer/categories`,
+    ).then((resp) => resp.json())
+
+    let name = categories.results.find(
+      (category: Category) => category.categoryId === args.categoryId,
+    ).name
+
     const set = await ctx.runQuery(api.sets.getSets, {
       categoryId: args.categoryId,
     })
@@ -15,6 +24,7 @@ export const fetchSets = action({
       ).then((resp) => resp.blob())
       const storageId = await ctx.storage.store(data)
       await ctx.runMutation(api.sets.saveSets, {
+        name: name,
         categoryId: args.categoryId,
         storageId,
       })
@@ -25,9 +35,14 @@ export const fetchSets = action({
 })
 
 export const saveSets = mutation({
-  args: { categoryId: v.number(), storageId: v.id('_storage') },
+  args: {
+    categoryId: v.number(),
+    storageId: v.id('_storage'),
+    name: v.string(),
+  },
   handler: async (ctx, args) => {
     await ctx.db.insert('sets', {
+      name: args.name,
       categoryId: args.categoryId,
       storageId: args.storageId,
     })
