@@ -1,6 +1,11 @@
-import { createFileRoute, Link, useParams, useSearch } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  useParams,
+  useSearch,
+} from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
-import { useQuery } from 'convex/react'
+import { useAction } from 'convex/react'
 import { useEffect, useState } from 'react'
 import {
   Table,
@@ -32,29 +37,34 @@ function RouteComponent() {
   const { groupId } = useParams({ from: '/products/$groupId' })
   const { categoryId } = useSearch({ from: '/products/$groupId' })
 
-  const product = useQuery(api.products.getProduct, {
-    groupId: Number(groupId),
-  })!
+  const fetchSetUrl = useAction(api.sets.fetchSetUrl)
+  const fetchProductUrl = useAction(api.products.fetchProductUrl)
 
-  const set = useQuery(api.sets.getSets, { categoryId })
-
-  const fileUrl = useQuery(api.products.getProductUrl, {
-    groupId: Number(groupId),
-  })
+  const [set, setSet] = useState<any[] | null>(null)
+  const [product, setProduct] = useState<any[] | null>(null)
   const [products, setProducts] = useState<ProductData[]>([])
 
   useEffect(() => {
-    if (!fileUrl) return
+    fetchSetUrl({ categoryId }).then(({ set }) => {
+      setSet(set)
+    })
+  }, [categoryId])
 
-    fetch(fileUrl)
-      .then((res) => res.json())
-      .then((data) => setProducts(data))
-      .catch((err) => console.error('Failed to fetch file:', err))
-  }, [fileUrl])
+  useEffect(() => {
+    fetchProductUrl({ categoryId, groupId: Number(groupId) }).then(
+      ({ product, fileUrl }) => {
+        setProduct(product)
+        if (!fileUrl) return
+        fetch(fileUrl)
+          .then((res) => res.json())
+          .then((data) => setProducts(data))
+          .catch((err) => console.error('Failed to fetch file:', err))
+      },
+    )
+  }, [groupId, categoryId])
 
   if (!product || !set) return <div>Loading...</div>
-  if (!fileUrl) return <div>Loading URL...</div>
-  if (!products) return <div>Loading file...</div>
+  if (!products.length) return <div>Loading file...</div>
 
   return (
     <div className="container mx-auto p-6">
