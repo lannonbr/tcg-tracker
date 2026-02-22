@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
-import { useQueries, useQuery } from 'convex/react'
+import { useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
 import {
   Table,
