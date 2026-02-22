@@ -1,6 +1,7 @@
 import { api } from './_generated/api'
 import { action, mutation, query } from './_generated/server'
 import { v } from 'convex/values'
+import type { Doc } from './_generated/dataModel'
 
 type PriceData = {
   productId: number
@@ -104,6 +105,31 @@ export const saveProducts = mutation({
   },
 })
 
+export const fetchProductUrl = action({
+  args: { categoryId: v.number(), groupId: v.number() },
+  handler: async (ctx, args) => {
+    let products: Doc<'products'>[] = await ctx.runQuery(
+      api.products.getProduct,
+      {
+        groupId: args.groupId,
+      },
+    )
+
+    if (products.length === 0) {
+      await ctx.runAction(api.products.fetchProducts, {
+        categoryId: args.categoryId,
+        groupId: args.groupId,
+      })
+      products = await ctx.runQuery(api.products.getProduct, {
+        groupId: args.groupId,
+      })
+    }
+
+    const fileUrl = await ctx.storage.getUrl(products[0].storageId)
+    return { product: products, fileUrl }
+  },
+})
+
 export const getProduct = query({
   args: { groupId: v.number() },
   handler: async (ctx, args) => {
@@ -111,19 +137,5 @@ export const getProduct = query({
       .query('products')
       .filter((q) => q.eq(q.field('groupId'), args.groupId))
       .collect()
-  },
-})
-
-export const getProductUrl = query({
-  args: { groupId: v.number() },
-  handler: async (ctx, args) => {
-    let results = await ctx.db
-      .query('products')
-      .filter((q) => q.eq(q.field('groupId'), args.groupId))
-      .collect()
-
-    let url = await ctx.storage.getUrl(results[0].storageId)
-
-    return url
   },
 })
