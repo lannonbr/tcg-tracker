@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
-import { useQuery } from 'convex/react'
+import { useAction } from 'convex/react'
 import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 import {
@@ -19,14 +19,18 @@ export const Route = createFileRoute('/sets/$categoryId')({
 function ConvexSets() {
   let { categoryId } = useParams({ from: '/sets/$categoryId' })
 
-  const set = useQuery(api.sets.getSets, {
-    categoryId: Number(categoryId),
-  })!
+  const action = useAction(api.sets.fetchSetUrl)
 
-  const fileUrl = useQuery(api.sets.getSetsUrl, {
-    categoryId: Number(categoryId),
-  })
+  const [set, setSet] = useState<any[] | null>(null)
+  const [fileUrl, setFileUrl] = useState<string | null>(null)
   const [setListing, setSetListing] = useState<Record<string, any> | null>(null)
+
+  useEffect(() => {
+    action({ categoryId: parseInt(categoryId) }).then(({ set, fileUrl }) => {
+      setSet(set)
+      setFileUrl(fileUrl)
+    })
+  }, [categoryId])
 
   useEffect(() => {
     if (!fileUrl) return
