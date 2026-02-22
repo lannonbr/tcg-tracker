@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams } from '@tanstack/react-router'
+import { createFileRoute, Link, useParams, useSearch } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import { useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
@@ -20,21 +20,23 @@ import {
 } from '@/components/ui/breadcrumb'
 
 export const Route = createFileRoute('/products/$groupId')({
+  validateSearch: (search) => {
+    if (!search.categoryId) throw new Error('categoryId is required')
+    return { categoryId: Number(search.categoryId) }
+  },
   component: RouteComponent,
   ssr: false,
 })
 
 function RouteComponent() {
   const { groupId } = useParams({ from: '/products/$groupId' })
+  const { categoryId } = useSearch({ from: '/products/$groupId' })
 
   const product = useQuery(api.products.getProduct, {
     groupId: Number(groupId),
   })!
 
-  const set = useQuery(
-    api.sets.getSets,
-    product ? { categoryId: Number(product[0].categoryId) } : 'skip',
-  )
+  const set = useQuery(api.sets.getSets, { categoryId })
 
   const fileUrl = useQuery(api.products.getProductUrl, {
     groupId: Number(groupId),
@@ -79,7 +81,7 @@ function RouteComponent() {
           <BreadcrumbItem>
             <Link
               to="/sets/$categoryId"
-              params={{ categoryId: product[0].categoryId.toString() }}
+              params={{ categoryId: categoryId.toString() }}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               Game: {set[0].name}

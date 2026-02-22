@@ -82,6 +82,7 @@ function ConvexSets() {
                 <Link
                   to="/products/$groupId"
                   params={{ groupId: set.groupId.toString() }}
+                  search={{ categoryId: parseInt(categoryId) }}
                   className="hover:underline"
                 >
                   {set.name}
