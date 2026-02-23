@@ -1,21 +1,14 @@
 import {
-  createFileRoute,
   Link,
+  createFileRoute,
   useParams,
   useSearch,
 } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import { useAction } from 'convex/react'
 import { useEffect, useState } from 'react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { ProductData } from 'convex/products'
+import type { ColumnDef } from '@tanstack/react-table'
+import type { ProductData } from 'convex/products'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,6 +16,80 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { DataTable, SortHeaderButton } from '@/components/data-table'
+
+type ProductRow = {
+  name: string
+  cardNumber: string
+  url: string
+  marketPrice: number | null
+}
+
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+})
+
+const columns: Array<ColumnDef<ProductRow>> = [
+  {
+    accessorKey: 'name',
+    header: ({ column }) => (
+      <SortHeaderButton
+        label="Name"
+        sort={column.getIsSorted()}
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      />
+    ),
+    enableSorting: true,
+    cell: ({ row }) => (
+      <span className="font-medium">{row.getValue<string>('name')}</span>
+    ),
+  },
+  {
+    accessorKey: 'cardNumber',
+    header: ({ column }) => (
+      <SortHeaderButton
+        label="Card Number"
+        sort={column.getIsSorted()}
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      />
+    ),
+    enableSorting: true,
+  },
+  {
+    accessorKey: 'url',
+    header: 'Url',
+    enableSorting: false,
+    cell: ({ row }) => (
+      <a
+        href={row.getValue<string>('url')}
+        className="text-blue-600 hover:underline dark:text-blue-400"
+      >
+        TCGPlayer
+      </a>
+    ),
+  },
+  {
+    accessorKey: 'marketPrice',
+    header: ({ column }) => (
+      <SortHeaderButton
+        label="Market Price"
+        sort={column.getIsSorted()}
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      />
+    ),
+    enableSorting: true,
+    sortingFn: (rowA, rowB, columnId) => {
+      const a = rowA.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
+      const b = rowB.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
+      return a - b
+    },
+    cell: ({ row }) => {
+      const marketPrice = row.getValue<number | null>('marketPrice')
+      return marketPrice !== null ? currencyFormatter.format(marketPrice) : ''
+    },
+  },
+]
 
 export const Route = createFileRoute('/products/$groupId')({
   validateSearch: (search) => {
@@ -40,20 +107,20 @@ function RouteComponent() {
   const fetchSetUrl = useAction(api.sets.fetchSetUrl)
   const fetchProductUrl = useAction(api.products.fetchProductUrl)
 
-  const [set, setSet] = useState<any[] | null>(null)
-  const [product, setProduct] = useState<any[] | null>(null)
-  const [products, setProducts] = useState<ProductData[]>([])
+  const [setData, setSetData] = useState<Array<any> | null>(null)
+  const [productMeta, setProductMeta] = useState<Array<any> | null>(null)
+  const [products, setProducts] = useState<Array<ProductData>>([])
 
   useEffect(() => {
     fetchSetUrl({ categoryId }).then(({ set }) => {
-      setSet(set)
+      setSetData(set)
     })
   }, [categoryId])
 
   useEffect(() => {
     fetchProductUrl({ categoryId, groupId: Number(groupId) }).then(
       ({ product, fileUrl }) => {
-        setProduct(product)
+        setProductMeta(product)
         if (!fileUrl) return
         fetch(fileUrl)
           .then((res) => res.json())
@@ -63,8 +130,17 @@ function RouteComponent() {
     )
   }, [groupId, categoryId])
 
-  if (!product || !set) return <div>Loading...</div>
+  if (!productMeta || !setData) return <div>Loading...</div>
   if (!products.length) return <div>Loading file...</div>
+
+  const tableData: Array<ProductRow> = products.map((currentProduct) => ({
+    name: currentProduct.name,
+    cardNumber:
+      currentProduct.extendedData.find((item) => item.name === 'Number')?.value ??
+      '',
+    url: currentProduct.url,
+    marketPrice: currentProduct.prices?.marketPrice ?? null,
+  }))
 
   return (
     <div className="container mx-auto p-6">
@@ -94,30 +170,33 @@ function RouteComponent() {
               params={{ categoryId: categoryId.toString() }}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              Game: {set[0].name}
+              Game: {setData[0].name}
             </Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Set: {product[0].name}</BreadcrumbPage>
+            <BreadcrumbPage>Set: {productMeta[0].name}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       <h2 className="text-2xl font-bold mb-4">
-        Top Products for {product[0].name}
+        Top Products for {productMeta[0].name}
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {products
           .filter(
-            (product: any) =>
-              product?.prices?.marketPrice &&
-              product.extendedData?.find((item: any) => item.name === 'Number'),
+            (productItem: ProductData) =>
+              productItem.prices?.marketPrice &&
+              productItem.extendedData.find((item) => item.name === 'Number'),
           )
-          .sort((a: any, b: any) => b.prices.marketPrice - a.prices.marketPrice)
+          .sort(
+            (a: ProductData, b: ProductData) =>
+              (b.prices?.marketPrice ?? 0) - (a.prices?.marketPrice ?? 0),
+          )
           .slice(0, 3)
-          .map((product: any, index: number) => (
+          .map((productItem: ProductData, index: number) => (
             <div
               key={index}
               className="relative overflow-hidden rounded-lg border bg-card p-6 shadow-lg transition-all hover:shadow-xl"
@@ -128,21 +207,18 @@ function RouteComponent() {
                     #{index + 1} Top Card
                   </span>
                   <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    {product.extendedData?.find(
-                      (item: any) => item.name === 'Number',
-                    )?.value ?? 'N/A'}
+                    {productItem.extendedData.find((item) => item.name === 'Number')
+                      ?.value ?? 'N/A'}
                   </span>
                 </div>
                 <h3 className="text-xl font-bold leading-tight">
-                  {product.name}
+                  {productItem.name}
                 </h3>
                 <div className="pt-2 border-t">
                   <p className="text-sm text-muted-foreground">Market Price</p>
+                  {/** Filter guarantees a numeric price for top cards. */}
                   <p className="text-3xl font-bold text-primary">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                    }).format(product.prices.marketPrice)}
+                    {currencyFormatter.format(productItem.prices?.marketPrice ?? 0)}
                   </p>
                 </div>
               </div>
@@ -152,44 +228,7 @@ function RouteComponent() {
 
       <h2 className="text-2xl font-bold mb-4">Products</h2>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Card Number</TableHead>
-            <TableHead>Url</TableHead>
-            <TableHead className="text-right">Market Price</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.map((product: any, index: number) => (
-            <TableRow key={index}>
-              <TableCell className="font-medium">{product.name}</TableCell>
-              <TableCell>
-                {product.extendedData?.find(
-                  (item: any) => item.name === 'Number',
-                )?.value ?? ''}
-              </TableCell>
-              <TableCell>
-                <a
-                  href={product.url}
-                  className="text-blue-600 hover:underline dark:text-blue-400"
-                >
-                  TCGPlayer
-                </a>
-              </TableCell>
-              <TableCell className="text-right">
-                {product?.prices?.marketPrice
-                  ? new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                    }).format(product.prices.marketPrice)
-                  : ''}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <DataTable columns={columns} data={tableData} />
     </div>
   )
 }
