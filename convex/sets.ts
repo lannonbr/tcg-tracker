@@ -1,54 +1,67 @@
-import { action, mutation, query } from './_generated/server'
-import { api } from './_generated/api'
+import { action, internalAction, internalMutation, mutation, query } from './_generated/server'
+import { api, components, internal } from './_generated/api'
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
 import { Category } from './categories'
+import { ActionCache } from '@convex-dev/action-cache'
 
-export const fetchSets = action({
+const setsCache = new ActionCache(components.actionCache, {
+  action: internal.sets.internalFetchSets,
+  name: 'fetchSets',
+  ttl: 7 * 24 * 60 * 60 * 1000, // 1 week
+})
+
+export const cleanupSetsEntry = internalMutation({
   args: { categoryId: v.number() },
   handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('sets')
+      .filter((q) => q.eq(q.field('categoryId'), args.categoryId))
+      .first()
+    if (existing) {
+      await ctx.storage.delete(existing.storageId)
+      await ctx.db.delete(existing._id)
+    }
+  },
+})
+
+export const internalFetchSets = internalAction({
+  args: { categoryId: v.number() },
+  handler: async (ctx, args) => {
+    await ctx.runMutation(internal.sets.cleanupSetsEntry, {
+      categoryId: args.categoryId,
+    })
+
     const categories = await fetch(
       `https://tcgcsv.com/tcgplayer/categories`,
     ).then((resp) => resp.json())
 
-    let name = categories.results.find(
+    const name = categories.results.find(
       (category: Category) => category.categoryId === args.categoryId,
     ).name
 
-    const set = await ctx.runQuery(api.sets.getSets, {
+    const data = await fetch(
+      `https://tcgcsv.com/tcgplayer/${args.categoryId}/groups`,
+    ).then((resp) => resp.blob())
+    const storageId = await ctx.storage.store(data)
+    await ctx.runMutation(api.sets.saveSets, {
+      name,
       categoryId: args.categoryId,
+      storageId,
     })
 
-    if (set.length == 0) {
-      const data = await fetch(
-        `https://tcgcsv.com/tcgplayer/${args.categoryId}/groups`,
-      ).then((resp) => resp.blob())
-      const storageId = await ctx.storage.store(data)
-      await ctx.runMutation(api.sets.saveSets, {
-        name: name,
-        categoryId: args.categoryId,
-        storageId,
-      })
-    }
+    return { storageId, name }
   },
 })
 
 export const fetchSetUrl = action({
   args: { categoryId: v.number() },
   handler: async (ctx, args) => {
-    let sets: Doc<'sets'>[] = await ctx.runQuery(api.sets.getSets, {
+    await setsCache.fetch(ctx, { categoryId: args.categoryId })
+
+    const sets: Doc<'sets'>[] = await ctx.runQuery(api.sets.getSets, {
       categoryId: args.categoryId,
     })
-
-    // If no set exists yet, fetch and store it first
-    if (sets.length === 0) {
-      await ctx.runAction(api.sets.fetchSets, {
-        categoryId: args.categoryId,
-      })
-      sets = await ctx.runQuery(api.sets.getSets, {
-        categoryId: args.categoryId,
-      })
-    }
 
     const fileUrl = await ctx.storage.getUrl(sets[0].storageId)
 

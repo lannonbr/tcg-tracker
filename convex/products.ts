@@ -1,7 +1,8 @@
-import { api } from './_generated/api'
-import { action, mutation, query } from './_generated/server'
+import { api, components, internal } from './_generated/api'
+import { action, internalAction, internalMutation, mutation, query } from './_generated/server'
 import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
+import { ActionCache } from '@convex-dev/action-cache'
 
 type PriceData = {
   productId: number
@@ -46,14 +47,38 @@ type Group = {
   categoryId: number
 }
 
-export const fetchProducts = action({
+const productsCache = new ActionCache(components.actionCache, {
+  action: internal.products.internalFetchProducts,
+  name: 'fetchProducts',
+  ttl: 24 * 60 * 60 * 1000, // 1 day
+})
+
+export const cleanupProductEntry = internalMutation({
+  args: { groupId: v.number() },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('products')
+      .filter((q) => q.eq(q.field('groupId'), args.groupId))
+      .first()
+    if (existing) {
+      await ctx.storage.delete(existing.storageId)
+      await ctx.db.delete(existing._id)
+    }
+  },
+})
+
+export const internalFetchProducts = internalAction({
   args: { categoryId: v.number(), groupId: v.number() },
   handler: async (ctx, args) => {
+    await ctx.runMutation(internal.products.cleanupProductEntry, {
+      groupId: args.groupId,
+    })
+
     const groupsData = await fetch(
       `https://tcgcsv.com/tcgplayer/${args.categoryId}/groups`,
     ).then((resp) => resp.json())
 
-    let name = groupsData.results.find(
+    const name = groupsData.results.find(
       (group: Group) => group.groupId === args.groupId,
     ).name
 
@@ -64,11 +89,10 @@ export const fetchProducts = action({
       `https://tcgcsv.com/tcgplayer/${args.categoryId}/${args.groupId}/prices`,
     ).then((resp) => resp.json())
 
-    let prices: PriceData[] = pricesData.results
-
+    const prices: PriceData[] = pricesData.results
     const pricesMap = new Map(prices.map((price) => [price.productId, price]))
 
-    let products: ProductData[] = productsData.results.map((product: any) => ({
+    const products: ProductData[] = productsData.results.map((product: any) => ({
       ...product,
       prices: pricesMap.get(product.productId),
     }))
@@ -82,9 +106,11 @@ export const fetchProducts = action({
     await ctx.runMutation(api.products.saveProducts, {
       categoryId: args.categoryId,
       groupId: args.groupId,
-      name: name,
+      name,
       storageId,
     })
+
+    return { storageId, name }
   },
 })
 
@@ -108,22 +134,15 @@ export const saveProducts = mutation({
 export const fetchProductUrl = action({
   args: { categoryId: v.number(), groupId: v.number() },
   handler: async (ctx, args) => {
-    let products: Doc<'products'>[] = await ctx.runQuery(
-      api.products.getProduct,
-      {
-        groupId: args.groupId,
-      },
-    )
+    await productsCache.fetch(ctx, {
+      categoryId: args.categoryId,
+      groupId: args.groupId,
+    })
 
-    if (products.length === 0) {
-      await ctx.runAction(api.products.fetchProducts, {
-        categoryId: args.categoryId,
-        groupId: args.groupId,
-      })
-      products = await ctx.runQuery(api.products.getProduct, {
-        groupId: args.groupId,
-      })
-    }
+    const products: Doc<'products'>[] = await ctx.runQuery(
+      api.products.getProduct,
+      { groupId: args.groupId },
+    )
 
     const fileUrl = await ctx.storage.getUrl(products[0].storageId)
     return { product: products, fileUrl }
