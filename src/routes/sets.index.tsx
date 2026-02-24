@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/breadcrumb'
 import { api } from 'convex/_generated/api'
 import { useQuery } from 'convex/react'
+import { useEffect } from 'react'
 
 export const Route = createFileRoute('/sets/')({
   component: RouteComponent,
@@ -16,6 +17,10 @@ export const Route = createFileRoute('/sets/')({
 
 function RouteComponent() {
   const categories = useQuery(api.categories.getCategories)
+
+  useEffect(() => {
+    document.title = 'Card Games | TCG Track'
+  }, [])
 
   if (!categories) return
 

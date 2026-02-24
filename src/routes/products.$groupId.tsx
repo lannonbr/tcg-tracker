@@ -121,6 +121,7 @@ function RouteComponent() {
     fetchProductUrl({ categoryId, groupId: Number(groupId) }).then(
       ({ product, fileUrl }) => {
         setProductMeta(product)
+        document.title = `${product[0].name} | TCG Track`
         if (!fileUrl) return
         fetch(fileUrl)
           .then((res) => res.json())

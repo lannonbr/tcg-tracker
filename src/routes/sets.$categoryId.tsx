@@ -29,6 +29,7 @@ function ConvexSets() {
     action({ categoryId: parseInt(categoryId) }).then(({ set, fileUrl }) => {
       setSet(set)
       setFileUrl(fileUrl)
+      document.title = `${set[0].name} | TCG Track`
     })
   }, [categoryId])
 
