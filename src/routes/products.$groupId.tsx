@@ -5,10 +5,12 @@ import {
   useSearch,
 } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
-import { useAction } from 'convex/react'
+import type { Doc } from 'convex/_generated/dataModel'
+import { useAction, useMutation, useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ProductData } from 'convex/products'
+import { X } from 'lucide-react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,10 +19,13 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { DataTable, SortHeaderButton } from '@/components/data-table'
+import { cn } from '@/lib/utils'
 
 type ProductRow = {
+  productId: number
   name: string
   cardNumber: string
+  imageUrl: string
   url: string
   marketPrice: number | null
 }
@@ -30,66 +35,236 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
 })
 
-const columns: Array<ColumnDef<ProductRow>> = [
-  {
-    accessorKey: 'name',
-    header: ({ column }) => (
-      <SortHeaderButton
-        label="Name"
-        sort={column.getIsSorted()}
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      />
-    ),
-    enableSorting: true,
-    cell: ({ row }) => (
-      <span className="font-medium">{row.getValue<string>('name')}</span>
-    ),
-  },
-  {
-    accessorKey: 'cardNumber',
-    header: ({ column }) => (
-      <SortHeaderButton
-        label="Card Number"
-        sort={column.getIsSorted()}
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      />
-    ),
-    enableSorting: true,
-  },
-  {
-    accessorKey: 'url',
-    header: 'Url',
-    enableSorting: false,
-    cell: ({ row }) => (
-      <a
-        href={row.getValue<string>('url')}
-        className="text-blue-600 hover:underline dark:text-blue-400"
+function createColumns(
+  onTrack: (product: ProductRow) => void,
+  trackedMap: Map<number, Doc<'trackedProducts'>>,
+): Array<ColumnDef<ProductRow>> {
+  return [
+    {
+      accessorKey: 'name',
+      header: ({ column }) => (
+        <SortHeaderButton
+          label="Name"
+          sort={column.getIsSorted()}
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        />
+      ),
+      enableSorting: true,
+      cell: ({ row }) => (
+        <span className="font-medium">{row.getValue<string>('name')}</span>
+      ),
+    },
+    {
+      accessorKey: 'cardNumber',
+      header: ({ column }) => (
+        <SortHeaderButton
+          label="Card Number"
+          sort={column.getIsSorted()}
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        />
+      ),
+      enableSorting: true,
+    },
+    {
+      accessorKey: 'url',
+      header: 'Url',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <a
+          href={row.getValue<string>('url')}
+          className="text-blue-600 hover:underline dark:text-blue-400"
+        >
+          TCGPlayer
+        </a>
+      ),
+    },
+    {
+      accessorKey: 'marketPrice',
+      header: ({ column }) => (
+        <SortHeaderButton
+          label="Market Price"
+          sort={column.getIsSorted()}
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        />
+      ),
+      enableSorting: true,
+      sortingFn: (rowA, rowB, columnId) => {
+        const a =
+          rowA.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
+        const b =
+          rowB.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
+        return a - b
+      },
+      cell: ({ row }) => {
+        const marketPrice = row.getValue<number | null>('marketPrice')
+        return marketPrice !== null ? currencyFormatter.format(marketPrice) : ''
+      },
+    },
+    {
+      id: 'actions',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const isTracked = trackedMap.has(row.original.productId)
+        return (
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => onTrack(row.original)}
+              className="rounded-md border border-primary px-3 py-1 text-sm font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+            >
+              {isTracked ? 'Edit' : 'Track'}
+            </button>
+          </div>
+        )
+      },
+    },
+  ]
+}
+
+function TrackSidebar({
+  product,
+  existingRecord,
+  categoryId,
+  groupId,
+  groupName,
+  categoryName,
+  onClose,
+}: {
+  product: ProductRow | null
+  existingRecord: Doc<'trackedProducts'> | null
+  categoryId: number
+  groupId: number
+  groupName: string
+  categoryName: string
+  onClose: () => void
+}) {
+  const [targetPrice, setTargetPrice] = useState('')
+  const trackProduct = useMutation(api.trackedProducts.trackProduct)
+  const updateTrackedProduct = useMutation(
+    api.trackedProducts.updateTrackedProduct,
+  )
+  const untrackProduct = useMutation(api.trackedProducts.untrackProduct)
+
+  useEffect(() => {
+    setTargetPrice(existingRecord ? String(existingRecord.requestedPrice) : '')
+  }, [product, existingRecord])
+
+  async function handleSubmit() {
+    if (!product || !targetPrice) return
+    if (existingRecord) {
+      await updateTrackedProduct({
+        id: existingRecord._id,
+        requestedPrice: Number(targetPrice),
+      })
+    } else {
+      await trackProduct({
+        categoryId,
+        groupId,
+        productId: product.productId,
+        productName: product.name,
+        groupName,
+        categoryName,
+        requestedPrice: Number(targetPrice),
+      })
+    }
+    onClose()
+  }
+
+  async function handleUntrack() {
+    if (!existingRecord) return
+    await untrackProduct({ id: existingRecord._id })
+    onClose()
+  }
+
+  return (
+    <>
+      {product && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+      <div
+        className={cn(
+          'fixed top-0 right-0 h-full w-96 bg-background border-l shadow-2xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col',
+          product ? 'translate-x-0' : 'translate-x-full',
+        )}
       >
-        TCGPlayer
-      </a>
-    ),
-  },
-  {
-    accessorKey: 'marketPrice',
-    header: ({ column }) => (
-      <SortHeaderButton
-        label="Market Price"
-        sort={column.getIsSorted()}
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      />
-    ),
-    enableSorting: true,
-    sortingFn: (rowA, rowB, columnId) => {
-      const a = rowA.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
-      const b = rowB.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
-      return a - b
-    },
-    cell: ({ row }) => {
-      const marketPrice = row.getValue<number | null>('marketPrice')
-      return marketPrice !== null ? currencyFormatter.format(marketPrice) : ''
-    },
-  },
-]
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-semibold">
+            {existingRecord ? 'Edit Tracked Card' : 'Track'}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close sidebar"
+            className="rounded-md p-1 hover:bg-muted transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {product && (
+          <div className="flex flex-col gap-4 p-4 overflow-y-auto">
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="w-full rounded-lg object-contain"
+            />
+            <div>
+              <p className="text-xs text-muted-foreground">Market Price</p>
+              <p className="text-2xl font-bold text-primary">
+                {product.marketPrice !== null
+                  ? currencyFormatter.format(product.marketPrice)
+                  : '—'}
+              </p>
+            </div>
+            <h3 className="text-xl font-bold">{product.name}</h3>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="target-price" className="text-sm font-medium">
+                Target Price
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                  $
+                </span>
+                <input
+                  id="target-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={targetPrice}
+                  onChange={(e) => setTargetPrice(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full rounded-md border bg-background pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!targetPrice}
+              className="mt-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Save
+            </button>
+            {existingRecord && (
+              <button
+                type="button"
+                onClick={handleUntrack}
+                className="rounded-md border border-red-600 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-600 hover:text-white transition-colors"
+              >
+                Untrack
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
 
 export const Route = createFileRoute('/products/$groupId')({
   validateSearch: (search) => {
@@ -106,10 +281,17 @@ function RouteComponent() {
 
   const fetchSetUrl = useAction(api.sets.fetchSetUrl)
   const fetchProductUrl = useAction(api.products.fetchProductUrl)
+  const trackedProducts = useQuery(
+    api.trackedProducts.getTrackedProductsByGroup,
+    { groupId: Number(groupId) },
+  )
 
   const [setData, setSetData] = useState<Array<any> | null>(null)
   const [productMeta, setProductMeta] = useState<Array<any> | null>(null)
   const [products, setProducts] = useState<Array<ProductData>>([])
+  const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(
+    null,
+  )
 
   useEffect(() => {
     fetchSetUrl({ categoryId }).then(({ set }) => {
@@ -135,13 +317,24 @@ function RouteComponent() {
   if (!products.length) return <div>Loading file...</div>
 
   const tableData: Array<ProductRow> = products.map((currentProduct) => ({
+    productId: currentProduct.productId,
     name: currentProduct.name,
     cardNumber:
-      currentProduct.extendedData.find((item) => item.name === 'Number')?.value ??
-      '',
+      currentProduct.extendedData.find((item) => item.name === 'Number')
+        ?.value ?? '',
+    imageUrl: currentProduct.imageUrl,
     url: currentProduct.url,
     marketPrice: currentProduct.prices?.marketPrice ?? null,
   }))
+
+  const trackedMap = new Map(
+    (trackedProducts ?? []).map((t) => [t.productId, t]),
+  )
+
+  const columns = createColumns(
+    (product) => setSelectedProduct(product),
+    trackedMap,
+  )
 
   return (
     <div className="container mx-auto p-6">
@@ -208,8 +401,9 @@ function RouteComponent() {
                     #{index + 1} Top Card
                   </span>
                   <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    {productItem.extendedData.find((item) => item.name === 'Number')
-                      ?.value ?? 'N/A'}
+                    {productItem.extendedData.find(
+                      (item) => item.name === 'Number',
+                    )?.value ?? 'N/A'}
                   </span>
                 </div>
                 <h3 className="text-xl font-bold leading-tight">
@@ -219,7 +413,9 @@ function RouteComponent() {
                   <p className="text-sm text-muted-foreground">Market Price</p>
                   {/** Filter guarantees a numeric price for top cards. */}
                   <p className="text-3xl font-bold text-primary">
-                    {currencyFormatter.format(productItem.prices?.marketPrice ?? 0)}
+                    {currencyFormatter.format(
+                      productItem.prices?.marketPrice ?? 0,
+                    )}
                   </p>
                 </div>
               </div>
@@ -230,6 +426,20 @@ function RouteComponent() {
       <h2 className="text-2xl font-bold mb-4">Products</h2>
 
       <DataTable columns={columns} data={tableData} />
+
+      <TrackSidebar
+        product={selectedProduct}
+        existingRecord={
+          selectedProduct
+            ? (trackedMap.get(selectedProduct.productId) ?? null)
+            : null
+        }
+        categoryId={categoryId}
+        groupId={Number(groupId)}
+        groupName={productMeta[0].name}
+        categoryName={setData[0].name}
+        onClose={() => setSelectedProduct(null)}
+      />
     </div>
   )
 }
