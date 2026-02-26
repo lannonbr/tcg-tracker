@@ -213,6 +213,14 @@ function TrackSidebar({
               alt={product.name}
               className="w-full rounded-lg object-contain"
             />
+            <div>
+              <p className="text-xs text-muted-foreground">Market Price</p>
+              <p className="text-2xl font-bold text-primary">
+                {product.marketPrice !== null
+                  ? currencyFormatter.format(product.marketPrice)
+                  : '—'}
+              </p>
+            </div>
             <h3 className="text-xl font-bold">{product.name}</h3>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="target-price" className="text-sm font-medium">
