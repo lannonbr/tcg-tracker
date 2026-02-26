@@ -1,7 +1,150 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { useAction, useQuery } from 'convex/react'
+import { api } from 'convex/_generated/api'
+import type { Doc } from 'convex/_generated/dataModel'
+import type { ColumnDef } from '@tanstack/react-table'
+import { DataTable, SortHeaderButton } from '@/components/data-table'
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute('/')({ component: App, ssr: false })
+
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+})
+
+type TrackedCardRow = Doc<'trackedProducts'> & { marketPrice: number | null }
+
+const columns: Array<ColumnDef<TrackedCardRow>> = [
+  {
+    accessorKey: 'productName',
+    header: ({ column }) => (
+      <SortHeaderButton
+        label="Name"
+        sort={column.getIsSorted()}
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      />
+    ),
+    enableSorting: true,
+    cell: ({ row }) => (
+      <span className="font-medium">{row.getValue<string>('productName')}</span>
+    ),
+  },
+  {
+    accessorKey: 'groupName',
+    header: ({ column }) => (
+      <SortHeaderButton
+        label="Set"
+        sort={column.getIsSorted()}
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      />
+    ),
+    enableSorting: true,
+    cell: ({ row }) => (
+      <Link
+        to="/products/$groupId"
+        params={{ groupId: String(row.original.groupId) }}
+        search={{ categoryId: row.original.categoryId }}
+        className="text-blue-600 hover:underline dark:text-blue-400"
+      >
+        {row.getValue<string>('groupName')}
+      </Link>
+    ),
+  },
+  {
+    accessorKey: 'marketPrice',
+    header: ({ column }) => (
+      <SortHeaderButton
+        label="Market Price"
+        sort={column.getIsSorted()}
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      />
+    ),
+    enableSorting: true,
+    sortingFn: (rowA, rowB, columnId) => {
+      const a =
+        rowA.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
+      const b =
+        rowB.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
+      return a - b
+    },
+    cell: ({ row }) => {
+      const price = row.getValue<number | null>('marketPrice')
+      return price !== null ? currencyFormatter.format(price) : '—'
+    },
+  },
+  {
+    accessorKey: 'requestedPrice',
+    header: ({ column }) => (
+      <SortHeaderButton
+        label="Requested Price"
+        sort={column.getIsSorted()}
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      />
+    ),
+    enableSorting: true,
+    cell: ({ row }) =>
+      currencyFormatter.format(row.getValue<number>('requestedPrice')),
+  },
+]
+
+function TrackedCardsTable() {
+  const trackedProducts = useQuery(api.trackedProducts.getTrackedProducts)
+  const fetchProductUrl = useAction(api.products.fetchProductUrl)
+  const [marketPrices, setMarketPrices] = useState<Map<number, number | null>>(
+    new Map(),
+  )
+
+  useEffect(() => {
+    if (!trackedProducts?.length) return
+
+    const groups = new Map<number, number>()
+    for (const p of trackedProducts) {
+      if (!groups.has(p.groupId)) groups.set(p.groupId, p.categoryId)
+    }
+
+    const loadPrices = async () => {
+      const priceMap = new Map<number, number | null>()
+      for (const [groupId, categoryId] of groups) {
+        const { fileUrl } = await fetchProductUrl({ categoryId, groupId })
+        if (!fileUrl) continue
+        const products: Array<{
+          productId: number
+          prices?: { marketPrice: number }
+        }> = await fetch(fileUrl).then((r) => r.json())
+        for (const product of products) {
+          priceMap.set(product.productId, product.prices?.marketPrice ?? null)
+        }
+      }
+      setMarketPrices(priceMap)
+    }
+
+    loadPrices()
+  }, [trackedProducts])
+
+  if (!trackedProducts)
+    return <p className="text-muted-foreground">Loading...</p>
+  if (!trackedProducts.length)
+    return (
+      <p className="text-muted-foreground">
+        No cards tracked yet.{' '}
+        <Link
+          to="/sets"
+          className="text-blue-600 hover:underline dark:text-blue-400"
+        >
+          Browse sets
+        </Link>{' '}
+        to start tracking.
+      </p>
+    )
+
+  const tableData: Array<TrackedCardRow> = trackedProducts.map((p) => ({
+    ...p,
+    marketPrice: marketPrices.get(p.productId) ?? null,
+  }))
+
+  return <DataTable columns={columns} data={tableData} />
+}
 
 function App() {
   useEffect(() => {
@@ -9,7 +152,7 @@ function App() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-linear-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col">
       <section className="relative py-20 px-6 text-center overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
         <div className="relative max-w-5xl mx-auto">
@@ -36,6 +179,13 @@ function App() {
               Browse Sets
             </Link>
           </div>
+        </div>
+      </section>
+
+      <section className="bg-white px-6 py-12 flex-1">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl font-bold mb-4">Tracked Cards</h2>
+          <TrackedCardsTable />
         </div>
       </section>
     </div>
