@@ -132,7 +132,7 @@ function TrackedCardsTable() {
           to="/sets"
           className="text-blue-600 hover:underline dark:text-blue-400"
         >
-          Browse sets
+          Browse All Games
         </Link>{' '}
         to start tracking.
       </p>
@@ -152,21 +152,24 @@ function App() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+    <div className="min-h-screen bg-linear-to-b from-violet-100 via-purple-50 to-white flex flex-col">
       <section className="relative py-20 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
+        <div className="absolute inset-0 bg-linear-to-r from-violet-200/40 via-purple-100/40 to-fuchsia-100/40"></div>
         <div className="relative max-w-5xl mx-auto">
           <div className="flex items-center justify-center gap-6 mb-6">
-            <h1 className="text-6xl md:text-7xl font-black text-white">
+            <h1 className="text-6xl md:text-7xl font-black text-black">
               TCG Tracker
             </h1>
           </div>
-          <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
+          <p className="text-2xl md:text-3xl text-black mb-4 font-light">
             Browse and follow trading card games
           </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
+          <p className="text-lg text-black max-w-3xl mx-auto mb-8">
             Powered via{' '}
-            <a className="text-blue-400" href="https://tcgcsv.com">
+            <a
+              className="text-violet-600 hover:underline"
+              href="https://tcgcsv.com"
+            >
               TCGCSV
             </a>
             .
@@ -174,9 +177,9 @@ function App() {
           <div className="flex flex-col items-center gap-4">
             <Link
               to="/sets"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
+              className="px-8 py-3 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-violet-400/50"
             >
-              Browse Sets
+              Browse All Games
             </Link>
           </div>
         </div>
