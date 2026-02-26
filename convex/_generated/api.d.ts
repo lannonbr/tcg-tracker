@@ -11,6 +11,7 @@
 import type * as categories from "../categories.js";
 import type * as products from "../products.js";
 import type * as sets from "../sets.js";
+import type * as trackedProducts from "../trackedProducts.js";
 
 import type {
   ApiFromModules,
@@ -22,6 +23,7 @@ declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   products: typeof products;
   sets: typeof sets;
+  trackedProducts: typeof trackedProducts;
 }>;
 
 /**

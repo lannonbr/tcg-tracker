@@ -28,4 +28,13 @@ export default defineSchema({
     popularity: v.number(),
     isDirect: v.boolean(),
   }),
+  trackedProducts: defineTable({
+    categoryId: v.number(),
+    groupId: v.number(),
+    productId: v.number(),
+    productName: v.string(),
+    groupName: v.string(),
+    categoryName: v.string(),
+    requestedPrice: v.number(),
+  }),
 })
