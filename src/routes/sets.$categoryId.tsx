@@ -26,10 +26,10 @@ function ConvexSets() {
   const [setListing, setSetListing] = useState<Record<string, any> | null>(null)
 
   useEffect(() => {
-    action({ categoryId: parseInt(categoryId) }).then(({ set, fileUrl }) => {
-      setSet(set)
-      setFileUrl(fileUrl)
-      document.title = `${set[0].name} | TCG Track`
+    action({ categoryId: parseInt(categoryId) }).then((result) => {
+      setSet(result.set)
+      setFileUrl(result.fileUrl)
+      document.title = `${result.set[0].name} | TCG Track`
     })
   }, [categoryId])
 
@@ -77,18 +77,18 @@ function ConvexSets() {
       <h2 className="text-2xl font-bold mb-4">Sets for {set[0].name}</h2>
       <ul className="">
         {setListing.results.map(
-          (set: { name: string; publishedOn: string; groupId: number }) => {
+          (setObj: { name: string; publishedOn: string; groupId: number }) => {
             return (
               <li className="list-disc ml-8 my-2">
                 <Link
                   to="/products/$groupId"
-                  params={{ groupId: set.groupId.toString() }}
+                  params={{ groupId: setObj.groupId.toString() }}
                   search={{ categoryId: parseInt(categoryId) }}
                   className="hover:underline"
                 >
-                  {set.name}
+                  {setObj.name}
                 </Link>
-                (Released: {dayjs(set.publishedOn).format('MMM DD, YYYY')})
+                (Released: {dayjs(setObj.publishedOn).format('MMM DD, YYYY')})
               </li>
             )
           },
