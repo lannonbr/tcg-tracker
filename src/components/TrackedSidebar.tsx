@@ -1,9 +1,9 @@
-import { cn } from '@/lib/utils'
 import { api } from 'convex/_generated/api'
-import { Doc } from 'convex/_generated/dataModel'
 import { useMutation } from 'convex/react'
 import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import type { Doc } from 'convex/_generated/dataModel'
+import { cn } from '@/lib/utils'
 
 type ProductRow = {
   productId: number

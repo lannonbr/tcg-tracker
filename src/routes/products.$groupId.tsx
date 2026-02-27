@@ -5,9 +5,9 @@ import {
   useSearch,
 } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
-import type { Doc } from 'convex/_generated/dataModel'
 import { useAction, useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
+import type { Doc } from 'convex/_generated/dataModel'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ProductData } from 'convex/products'
 import {

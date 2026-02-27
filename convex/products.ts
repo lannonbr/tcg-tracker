@@ -1,8 +1,8 @@
+import { v } from 'convex/values'
+import { ActionCache } from '@convex-dev/action-cache'
 import { api, components, internal } from './_generated/api'
 import { action, internalAction, internalMutation, mutation, query } from './_generated/server'
-import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
-import { ActionCache } from '@convex-dev/action-cache'
 
 type PriceData = {
   productId: number
@@ -89,10 +89,10 @@ export const internalFetchProducts = internalAction({
       `https://tcgcsv.com/tcgplayer/${args.categoryId}/${args.groupId}/prices`,
     ).then((resp) => resp.json())
 
-    const prices: PriceData[] = pricesData.results
+    const prices: Array<PriceData> = pricesData.results
     const pricesMap = new Map(prices.map((price) => [price.productId, price]))
 
-    const products: ProductData[] = productsData.results.map((product: any) => ({
+    const products: Array<ProductData> = productsData.results.map((product: any) => ({
       ...product,
       prices: pricesMap.get(product.productId),
     }))
@@ -139,7 +139,7 @@ export const fetchProductUrl = action({
       groupId: args.groupId,
     })
 
-    const products: Doc<'products'>[] = await ctx.runQuery(
+    const products: Array<Doc<'products'>> = await ctx.runQuery(
       api.products.getProduct,
       { groupId: args.groupId },
     )

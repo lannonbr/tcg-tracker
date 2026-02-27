@@ -1,6 +1,6 @@
+import { v } from 'convex/values'
 import { action, mutation, query } from './_generated/server'
 import { api } from './_generated/api'
-import { v } from 'convex/values'
 
 export type Category = {
   categoryId: number
@@ -79,7 +79,7 @@ export const fetchCategories = action({
       (resp) => resp.json(),
     )
 
-    let categories: Category[] = data.results
+    const categories: Array<Category> = data.results
 
     // Insert each category into the database
     for (const category of categories) {

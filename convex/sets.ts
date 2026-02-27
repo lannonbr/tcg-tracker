@@ -1,9 +1,9 @@
+import { v } from 'convex/values'
+import { ActionCache } from '@convex-dev/action-cache'
 import { action, internalAction, internalMutation, mutation, query } from './_generated/server'
 import { api, components, internal } from './_generated/api'
-import { v } from 'convex/values'
 import type { Doc } from './_generated/dataModel'
-import { Category } from './categories'
-import { ActionCache } from '@convex-dev/action-cache'
+import type { Category } from './categories'
 
 const setsCache = new ActionCache(components.actionCache, {
   action: internal.sets.internalFetchSets,
@@ -59,7 +59,7 @@ export const fetchSetUrl = action({
   handler: async (ctx, args) => {
     await setsCache.fetch(ctx, { categoryId: args.categoryId })
 
-    const sets: Doc<'sets'>[] = await ctx.runQuery(api.sets.getSets, {
+    const sets: Array<Doc<'sets'>> = await ctx.runQuery(api.sets.getSets, {
       categoryId: args.categoryId,
     })
 
@@ -76,7 +76,7 @@ export const saveSets = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    let id = await ctx.db.insert('sets', {
+    const id = await ctx.db.insert('sets', {
       name: args.name,
       categoryId: args.categoryId,
       storageId: args.storageId,

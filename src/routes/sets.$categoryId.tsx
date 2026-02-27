@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams } from '@tanstack/react-router'
+import { Link, createFileRoute, useParams } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
 import { useAction } from 'convex/react'
 import { useEffect, useState } from 'react'
@@ -17,11 +17,11 @@ export const Route = createFileRoute('/sets/$categoryId')({
 })
 
 function ConvexSets() {
-  let { categoryId } = useParams({ from: '/sets/$categoryId' })
+  const { categoryId } = useParams({ from: '/sets/$categoryId' })
 
   const action = useAction(api.sets.fetchSetUrl)
 
-  const [set, setSet] = useState<any[] | null>(null)
+  const [set, setSet] = useState<Array<any> | null>(null)
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const [setListing, setSetListing] = useState<Record<string, any> | null>(null)
 
