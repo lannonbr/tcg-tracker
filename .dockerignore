@@ -1,0 +1,6 @@
+.output
+.tanstack
+.vscode
+convex-backend
+node_modules
+.env*
