@@ -1,6 +1,6 @@
 # TCG Tracker
 
-This is a React application that wraps the [TCGCSV](https://tcgcsv.com) data that allows me to browse its data and be able to track individual products.
+This is a React application that wraps the [TCGCSV](https://tcgcsv.com) data that allows me to browse its data and be able to track individual products. This also has an integration with a Discord Webhook that I can get alerts if a product is under a price I input that I am willing to purchase it for.
 
 ## Getting Started
 
@@ -16,6 +16,6 @@ To do all three of these at once, I have a [Zellij](https://zellij.dev/) layout 
 
 Also deploy a [Discord webhook url](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) via either the Convex dashboard or cli with the key of `DISCORD_WEBHOOK_URL`.
 
-# Building For Production
+## Building For Production
 
 To build this application for production, run `npm run build` and it will generate a `.output` folder to be deployed.
