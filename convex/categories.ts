@@ -1,6 +1,13 @@
 import { v } from 'convex/values'
-import { action, mutation, query } from './_generated/server'
-import { api } from './_generated/api'
+import { ActionCache } from '@convex-dev/action-cache'
+import { components, internal } from './_generated/api'
+import {
+  action,
+  internalAction,
+  internalMutation,
+  mutation,
+  query,
+} from './_generated/server'
 
 export type Category = {
   categoryId: number
@@ -18,6 +25,28 @@ export type Category = {
   isDirect: boolean
 }
 
+const categoryValidator = {
+  categoryId: v.number(),
+  name: v.string(),
+  modifiedOn: v.string(),
+  displayName: v.string(),
+  seoCategoryName: v.string(),
+  categoryDescription: v.union(v.string(), v.null()),
+  categoryPageTitle: v.union(v.string(), v.null()),
+  sealedLabel: v.union(v.string(), v.null()),
+  nonSealedLabel: v.union(v.string(), v.null()),
+  conditionGuideUrl: v.string(),
+  isScannable: v.boolean(),
+  popularity: v.number(),
+  isDirect: v.boolean(),
+}
+
+const categoriesCache = new ActionCache(components.actionCache, {
+  action: internal.categories.internalFetchCategories,
+  name: 'fetchCategories',
+  ttl: 30 * 24 * 60 * 60 * 1000, // 30 days
+})
+
 export const hasCategories = query({
   args: {},
   handler: async (ctx) => {
@@ -27,21 +56,7 @@ export const hasCategories = query({
 })
 
 export const saveCategory = mutation({
-  args: {
-    categoryId: v.number(),
-    name: v.string(),
-    modifiedOn: v.string(),
-    displayName: v.string(),
-    seoCategoryName: v.string(),
-    categoryDescription: v.union(v.string(), v.null()),
-    categoryPageTitle: v.union(v.string(), v.null()),
-    sealedLabel: v.union(v.string(), v.null()),
-    nonSealedLabel: v.union(v.string(), v.null()),
-    conditionGuideUrl: v.string(),
-    isScannable: v.boolean(),
-    popularity: v.number(),
-    isDirect: v.boolean(),
-  },
+  args: categoryValidator,
   handler: async (ctx, args) => {
     await ctx.db.insert('categories', args)
   },
@@ -67,25 +82,39 @@ export const getCategory = query({
 export const fetchCategories = action({
   args: {},
   handler: async (ctx) => {
-    // Check if categories already exist
-    const exists = await ctx.runQuery(api.categories.hasCategories)
+    await categoriesCache.fetch(ctx, {})
+  },
+})
 
-    if (exists) {
-      console.log('Categories already exist, skipping fetch')
-      return
+export const syncCategories = internalMutation({
+  args: {
+    categories: v.array(v.object(categoryValidator)),
+  },
+  handler: async (ctx, args) => {
+    const existingCategories = await ctx.db.query('categories').collect()
+    for (const category of existingCategories) {
+      await ctx.db.delete(category._id)
     }
+    for (const category of args.categories) {
+      await ctx.db.insert('categories', category)
+    }
+    return args.categories.length
+  },
+})
 
-    const data = await fetch(`https://tcgcsv.com/tcgplayer/categories`).then(
-      (resp) => resp.json(),
-    )
-
+export const internalFetchCategories = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const response = await fetch('https://tcgcsv.com/tcgplayer/categories')
+    const data = await response.json()
     const categories: Array<Category> = data.results
 
-    // Insert each category into the database
-    for (const category of categories) {
-      await ctx.runMutation(api.categories.saveCategory, category)
-    }
+    const syncedCount: number = await ctx.runMutation(
+      internal.categories.syncCategories,
+      { categories },
+    )
 
-    console.log(`Saved ${categories.length} categories`)
+    console.log(`Synced ${syncedCount} categories`)
+    return { syncedCount }
   },
 })
