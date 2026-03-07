@@ -131,7 +131,7 @@ export const saveProducts = mutation({
   },
 })
 
-export const fetchProductUrl = action({
+export const fetchProducts = action({
   args: { categoryId: v.number(), groupId: v.number() },
   handler: async (ctx, args) => {
     await productsCache.fetch(ctx, {
@@ -144,8 +144,9 @@ export const fetchProductUrl = action({
       { groupId: args.groupId },
     )
 
-    const fileUrl = await ctx.storage.getUrl(products[0].storageId)
-    return { product: products, fileUrl }
+    const blob = await ctx.storage.get(products[0].storageId)
+    const data = blob ? JSON.parse(await blob.text()) : null
+    return { product: products, data }
   },
 })
 

@@ -61,13 +61,11 @@ export const checkPricesAndNotify = internalAction({
     const alertEmbeds: Array<DiscordEmbed> = []
 
     for (const { categoryId, groupId, products } of groupMap.values()) {
-      const { fileUrl } = await ctx.runAction(api.products.fetchProductUrl, {
+      const { data } = await ctx.runAction(api.products.fetchProducts, {
         categoryId,
         groupId,
       })
-      const productList: Array<ProductData> = fileUrl
-        ? await fetch(fileUrl).then((r) => r.json())
-        : []
+      const productList: Array<ProductData> = data ?? []
       const productsMap = new Map(productList.map((p) => [p.productId, p]))
 
       for (const trackedProduct of products) {

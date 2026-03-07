@@ -90,7 +90,7 @@ const columns: Array<ColumnDef<TrackedCardRow>> = [
 
 function TrackedCardsTable() {
   const trackedProducts = useQuery(api.trackedProducts.getTrackedProducts)
-  const fetchProductUrl = useAction(api.products.fetchProductUrl)
+  const fetchProducts = useAction(api.products.fetchProducts)
   const [marketPrices, setMarketPrices] = useState<Map<number, number | null>>(
     new Map(),
   )
@@ -106,12 +106,12 @@ function TrackedCardsTable() {
     const loadPrices = async () => {
       const priceMap = new Map<number, number | null>()
       for (const [groupId, categoryId] of groups) {
-        const { fileUrl } = await fetchProductUrl({ categoryId, groupId })
-        if (!fileUrl) continue
+        const { data } = await fetchProducts({ categoryId, groupId })
+        if (!data) continue
         const products: Array<{
           productId: number
           prices?: { marketPrice: number }
-        }> = await fetch(fileUrl).then((r) => r.json())
+        }> = data
         for (const product of products) {
           priceMap.set(product.productId, product.prices?.marketPrice ?? null)
         }

@@ -135,7 +135,7 @@ function RouteComponent() {
   const { categoryId } = useSearch({ from: '/products/$groupId' })
 
   const fetchSetUrl = useAction(api.sets.fetchSetUrl)
-  const fetchProductUrl = useAction(api.products.fetchProductUrl)
+  const fetchProducts = useAction(api.products.fetchProducts)
   const trackedProducts = useQuery(
     api.trackedProducts.getTrackedProductsByGroup,
     { groupId: Number(groupId) },
@@ -155,15 +155,11 @@ function RouteComponent() {
   }, [categoryId])
 
   useEffect(() => {
-    fetchProductUrl({ categoryId, groupId: Number(groupId) }).then(
-      ({ product, fileUrl }) => {
+    fetchProducts({ categoryId, groupId: Number(groupId) }).then(
+      ({ product, data }) => {
         setProductMeta(product)
         document.title = `${product[0].name} | TCG Track`
-        if (!fileUrl) return
-        fetch(fileUrl)
-          .then((res) => res.json())
-          .then((data) => setProducts(data))
-          .catch((err) => console.error('Failed to fetch file:', err))
+        if (data) setProducts(data)
       },
     )
   }, [groupId, categoryId])
