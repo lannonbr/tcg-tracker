@@ -11,7 +11,7 @@ type DiscordEmbed = {
 
 async function sendDiscordNotification(
   webhookUrl: string,
-  embeds: DiscordEmbed[],
+  embeds: Array<DiscordEmbed>,
 ) {
   await fetch(webhookUrl, {
     method: 'POST',
@@ -58,14 +58,14 @@ export const checkPricesAndNotify = internalAction({
       groupMap.get(key)!.products.push(product)
     }
 
-    const alertEmbeds: DiscordEmbed[] = []
+    const alertEmbeds: Array<DiscordEmbed> = []
 
     for (const { categoryId, groupId, products } of groupMap.values()) {
       const { fileUrl } = await ctx.runAction(api.products.fetchProductUrl, {
         categoryId,
         groupId,
       })
-      const productList: ProductData[] = fileUrl
+      const productList: Array<ProductData> = fileUrl
         ? await fetch(fileUrl).then((r) => r.json())
         : []
       const productsMap = new Map(productList.map((p) => [p.productId, p]))
