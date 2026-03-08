@@ -20,6 +20,9 @@ export default function AppConvexProvider({
 }: {
   children: React.ReactNode
 }) {
+  if (typeof window === 'undefined') {
+    return <>{children}</>
+  }
   const client = getConvexQueryClient()
   return (
     <ConvexProvider client={client.convexClient}>
