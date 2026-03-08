@@ -19,3 +19,7 @@ Also deploy a [Discord webhook url](https://support.discord.com/hc/en-us/article
 ## Building For Production
 
 To build this application for production, run `npm run build` and it will generate a `.output` folder to be deployed.
+
+Then when running the app, set the `CONVEX_URL` and `CONVEX_SITE_URL` env variables to point to Convex (No `VITE_` prefix as that would require the vars to be set at build time while this allows them to be set at runtime).
+
+> **Note**: As of right now there is no auth layer for convex, but I have deployed this via my internal network so I did not need any for now. If you wish to deploy this app to the public internet, you probably may want to have an auth layer / rate limiting such that Convex is not sent a huge amount of requests by a malicious actor.
