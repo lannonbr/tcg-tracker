@@ -32,10 +32,15 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const env = {
+    CONVEX_URL: process.env.CONVEX_URL ?? '',
+    CONVEX_SITE_URL: process.env.CONVEX_SITE_URL ?? '',
+  }
   return (
     <html lang="en">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: `window.__ENV__ = ${JSON.stringify(env)}` }} />
       </head>
       <body>
         <ConvexProvider>
