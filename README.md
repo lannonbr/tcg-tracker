@@ -2,6 +2,8 @@
 
 This is a React application that wraps the [TCGCSV](https://tcgcsv.com) data that allows me to browse its data and be able to track individual products. This also has an integration with a Discord Webhook that I can get alerts if a product is under a price I input that I am willing to purchase it for.
 
+![TCG Tracker Homepage Screenshot](./tcg-tracker-screenshot.png)
+
 ## Getting Started
 
 First install the node modules with `npm install`.
