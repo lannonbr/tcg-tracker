@@ -18,6 +18,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { DataTable, SortHeaderButton } from '@/components/data-table'
+import { ProductHoverPreview } from '@/components/ProductHoverPreview'
 import { TrackSidebar } from '@/components/TrackedSidebar'
 
 type ProductRow = {
@@ -50,7 +51,13 @@ function createColumns(
       ),
       enableSorting: true,
       cell: ({ row }) => (
-        <span className="font-medium">{row.getValue<string>('name')}</span>
+        <ProductHoverPreview
+          imageUrl={row.original.imageUrl}
+          name={row.getValue<string>('name')}
+          cardNumber={row.original.cardNumber}
+        >
+          <span className="font-medium">{row.getValue<string>('name')}</span>
+        </ProductHoverPreview>
       ),
     },
     {
@@ -257,9 +264,19 @@ function RouteComponent() {
                     )?.value ?? 'N/A'}
                   </span>
                 </div>
-                <h3 className="text-xl font-bold leading-tight">
-                  {productItem.name}
-                </h3>
+                <ProductHoverPreview
+                  imageUrl={productItem.imageUrl}
+                  name={productItem.name}
+                  cardNumber={
+                    productItem.extendedData.find(
+                      (item) => item.name === 'Number',
+                    )?.value
+                  }
+                >
+                  <h3 className="text-xl font-bold leading-tight">
+                    {productItem.name}
+                  </h3>
+                </ProductHoverPreview>
                 <div className="pt-2 border-t">
                   <p className="text-sm text-muted-foreground">Market Price</p>
                   {/** Filter guarantees a numeric price for top cards. */}

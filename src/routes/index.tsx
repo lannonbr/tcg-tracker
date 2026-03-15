@@ -5,6 +5,7 @@ import { api } from 'convex/_generated/api'
 import type { Doc } from 'convex/_generated/dataModel'
 import type { ColumnDef } from '@tanstack/react-table'
 import { DataTable, SortHeaderButton } from '@/components/data-table'
+import { ProductHoverPreview } from '@/components/ProductHoverPreview'
 
 export const Route = createFileRoute('/')({ component: App, ssr: false })
 
@@ -13,7 +14,10 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   currency: 'USD',
 })
 
-type TrackedCardRow = Doc<'trackedProducts'> & { marketPrice: number | null }
+type TrackedCardRow = Doc<'trackedProducts'> & {
+  marketPrice: number | null
+  imageUrl: string | null
+}
 
 const columns: Array<ColumnDef<TrackedCardRow>> = [
   {
@@ -27,7 +31,14 @@ const columns: Array<ColumnDef<TrackedCardRow>> = [
     ),
     enableSorting: true,
     cell: ({ row }) => (
-      <span className="font-medium">{row.getValue<string>('productName')}</span>
+      <ProductHoverPreview
+        imageUrl={row.original.imageUrl}
+        name={row.getValue<string>('productName')}
+      >
+        <span className="font-medium">
+          {row.getValue<string>('productName')}
+        </span>
+      </ProductHoverPreview>
     ),
   },
   {
@@ -91,9 +102,9 @@ const columns: Array<ColumnDef<TrackedCardRow>> = [
 function TrackedCardsTable() {
   const trackedProducts = useQuery(api.trackedProducts.getTrackedProducts)
   const fetchProducts = useAction(api.products.fetchProducts)
-  const [marketPrices, setMarketPrices] = useState<Map<number, number | null>>(
-    new Map(),
-  )
+  const [productDetails, setProductDetails] = useState<
+    Map<number, { marketPrice: number | null; imageUrl: string | null }>
+  >(new Map())
 
   useEffect(() => {
     if (!trackedProducts?.length) return
@@ -104,23 +115,30 @@ function TrackedCardsTable() {
     }
 
     const loadPrices = async () => {
-      const priceMap = new Map<number, number | null>()
+      const detailMap = new Map<
+        number,
+        { marketPrice: number | null; imageUrl: string | null }
+      >()
       for (const [groupId, categoryId] of groups) {
         const { data } = await fetchProducts({ categoryId, groupId })
         if (!data) continue
         const products: Array<{
           productId: number
+          imageUrl: string
           prices?: { marketPrice: number }
         }> = data
         for (const product of products) {
-          priceMap.set(product.productId, product.prices?.marketPrice ?? null)
+          detailMap.set(product.productId, {
+            marketPrice: product.prices?.marketPrice ?? null,
+            imageUrl: product.imageUrl,
+          })
         }
       }
-      setMarketPrices(priceMap)
+      setProductDetails(detailMap)
     }
 
     loadPrices()
-  }, [trackedProducts])
+  }, [fetchProducts, trackedProducts])
 
   if (!trackedProducts)
     return <p className="text-muted-foreground">Loading...</p>
@@ -140,7 +158,8 @@ function TrackedCardsTable() {
 
   const tableData: Array<TrackedCardRow> = trackedProducts.map((p) => ({
     ...p,
-    marketPrice: marketPrices.get(p.productId) ?? null,
+    marketPrice: productDetails.get(p.productId)?.marketPrice ?? null,
+    imageUrl: productDetails.get(p.productId)?.imageUrl ?? null,
   }))
 
   return <DataTable columns={columns} data={tableData} />
