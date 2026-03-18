@@ -132,11 +132,23 @@ export const saveProducts = mutation({
 })
 
 export const fetchProducts = action({
-  args: { categoryId: v.number(), groupId: v.number() },
+  args: {
+    categoryId: v.number(),
+    groupId: v.number(),
+    forceRefresh: v.optional(v.boolean()),
+  },
   handler: async (ctx, args) => {
-    await productsCache.fetch(ctx, {
+    const cacheArgs = {
       categoryId: args.categoryId,
       groupId: args.groupId,
+    }
+
+    if (args.forceRefresh) {
+      await productsCache.remove(ctx, cacheArgs)
+    }
+
+    await productsCache.fetch(ctx, cacheArgs, {
+      force: args.forceRefresh,
     })
 
     const products: Array<Doc<'products'>> = await ctx.runQuery(

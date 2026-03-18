@@ -80,9 +80,14 @@ export const getCategory = query({
 })
 
 export const fetchCategories = action({
-  args: {},
-  handler: async (ctx) => {
-    await categoriesCache.fetch(ctx, {})
+  args: { forceRefresh: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    if (args.forceRefresh) {
+      await categoriesCache.remove(ctx, {})
+    }
+    await categoriesCache.fetch(ctx, {}, {
+      force: args.forceRefresh,
+    })
   },
 })
 

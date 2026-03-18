@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/breadcrumb'
 import { DataTable, SortHeaderButton } from '@/components/data-table'
 import { ProductHoverPreview } from '@/components/ProductHoverPreview'
+import { RefreshButton } from '@/components/RefreshButton'
 import { TrackSidebar } from '@/components/TrackedSidebar'
 
 type ProductRow = {
@@ -154,6 +155,34 @@ function RouteComponent() {
   const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(
     null,
   )
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [refreshError, setRefreshError] = useState<string | null>(null)
+
+  const loadProducts = async (forceRefresh = false) => {
+    if (forceRefresh) {
+      setIsRefreshing(true)
+    }
+    setRefreshError(null)
+
+    try {
+      const { product, data } = await fetchProducts({
+        categoryId,
+        groupId: Number(groupId),
+        forceRefresh,
+      })
+      setProductMeta(product)
+      document.title = `${product[0].name} | TCG Track`
+      setProducts(data ?? [])
+    } catch (error) {
+      setRefreshError(
+        error instanceof Error ? error.message : 'Failed to refresh products.',
+      )
+    } finally {
+      if (forceRefresh) {
+        setIsRefreshing(false)
+      }
+    }
+  }
 
   useEffect(() => {
     fetchSetUrl({ categoryId }).then(({ set }) => {
@@ -162,13 +191,7 @@ function RouteComponent() {
   }, [categoryId])
 
   useEffect(() => {
-    fetchProducts({ categoryId, groupId: Number(groupId) }).then(
-      ({ product, data }) => {
-        setProductMeta(product)
-        document.title = `${product[0].name} | TCG Track`
-        if (data) setProducts(data)
-      },
-    )
+    void loadProducts()
   }, [groupId, categoryId])
 
   if (!productMeta || !setData) return <div>Loading...</div>
@@ -232,9 +255,18 @@ function RouteComponent() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <h2 className="text-2xl font-bold mb-4">
-        Top Products for {productMeta[0].name}
-      </h2>
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <h2 className="text-2xl font-bold">
+          Top Products for {productMeta[0].name}
+        </h2>
+        <RefreshButton
+          onClick={() => void loadProducts(true)}
+          isRefreshing={isRefreshing}
+        />
+      </div>
+      {refreshError ? (
+        <p className="mb-4 text-sm text-destructive">{refreshError}</p>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {products

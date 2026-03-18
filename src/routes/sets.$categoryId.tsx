@@ -10,6 +10,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { RefreshButton } from '@/components/RefreshButton'
 
 export const Route = createFileRoute('/sets/$categoryId')({
   ssr: false,
@@ -24,13 +25,37 @@ function ConvexSets() {
   const [set, setSet] = useState<Array<any> | null>(null)
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const [setListing, setSetListing] = useState<Record<string, any> | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [refreshError, setRefreshError] = useState<string | null>(null)
 
-  useEffect(() => {
-    action({ categoryId: parseInt(categoryId) }).then((result) => {
+  const loadSets = async (forceRefresh = false) => {
+    if (forceRefresh) {
+      setIsRefreshing(true)
+    }
+    setRefreshError(null)
+
+    try {
+      const result = await action({
+        categoryId: parseInt(categoryId),
+        forceRefresh,
+      })
       setSet(result.set)
       setFileUrl(result.fileUrl)
+      setSetListing(null)
       document.title = `${result.set[0].name} | TCG Track`
-    })
+    } catch (error) {
+      setRefreshError(
+        error instanceof Error ? error.message : 'Failed to refresh sets.',
+      )
+    } finally {
+      if (forceRefresh) {
+        setIsRefreshing(false)
+      }
+    }
+  }
+
+  useEffect(() => {
+    void loadSets()
   }, [categoryId])
 
   useEffect(() => {
@@ -74,12 +99,24 @@ function ConvexSets() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <h2 className="text-2xl font-bold mb-4">Sets for {set[0].name}</h2>
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <h2 className="text-2xl font-bold">Sets for {set[0].name}</h2>
+        <RefreshButton
+          onClick={() => void loadSets(true)}
+          isRefreshing={isRefreshing}
+        />
+      </div>
+      {refreshError ? (
+        <p className="mb-4 text-sm text-destructive">{refreshError}</p>
+      ) : null}
       <ul className="">
         {setListing.results.map(
           (setObj: { name: string; publishedOn: string; groupId: number }) => {
             return (
-              <li className="list-disc ml-8 my-2">
+              <li
+                key={setObj.groupId}
+                className="list-disc ml-8 my-2"
+              >
                 <Link
                   to="/products/$groupId"
                   params={{ groupId: setObj.groupId.toString() }}

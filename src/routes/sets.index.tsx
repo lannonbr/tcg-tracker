@@ -9,6 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { RefreshButton } from '@/components/RefreshButton'
 
 export const Route = createFileRoute('/sets/')({
   component: RouteComponent,
@@ -35,6 +36,25 @@ function RouteComponent() {
 
     try {
       await fetchCategories({})
+    } catch (error) {
+      if ((categoriesRef.current?.length ?? 0) > 0) {
+        console.error('Failed to sync categories:', error)
+      } else {
+        setSyncError(
+          error instanceof Error ? error.message : 'Failed to sync categories.',
+        )
+      }
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
+  const refreshCategories = async () => {
+    setIsSyncing(true)
+    setSyncError(null)
+
+    try {
+      await fetchCategories({ forceRefresh: true })
     } catch (error) {
       if ((categoriesRef.current?.length ?? 0) > 0) {
         console.error('Failed to sync categories:', error)
@@ -110,7 +130,13 @@ function RouteComponent() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <h1 className="text-2xl font-bold mb-4">Categories</h1>
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold">Categories</h1>
+        <RefreshButton
+          onClick={() => void refreshCategories()}
+          isRefreshing={isSyncing}
+        />
+      </div>
       {content}
     </div>
   )

@@ -55,9 +55,20 @@ export const internalFetchSets = internalAction({
 })
 
 export const fetchSetUrl = action({
-  args: { categoryId: v.number() },
+  args: {
+    categoryId: v.number(),
+    forceRefresh: v.optional(v.boolean()),
+  },
   handler: async (ctx, args) => {
-    await setsCache.fetch(ctx, { categoryId: args.categoryId })
+    if (args.forceRefresh) {
+      await setsCache.remove(ctx, { categoryId: args.categoryId })
+    }
+
+    await setsCache.fetch(
+      ctx,
+      { categoryId: args.categoryId },
+      { force: args.forceRefresh },
+    )
 
     const sets: Array<Doc<'sets'>> = await ctx.runQuery(api.sets.getSets, {
       categoryId: args.categoryId,
