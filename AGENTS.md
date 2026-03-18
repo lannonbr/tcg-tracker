@@ -1,0 +1,2 @@
+- Dynamic TanStack route files in `src/routes/` use literal `$` characters in filenames, for example `src/routes/sets.$categoryId.tsx` and `src/routes/products.$groupId.tsx`.
+- When referencing these files in shell commands, always single-quote the full path, for example `'src/routes/sets.$categoryId.tsx'`.
