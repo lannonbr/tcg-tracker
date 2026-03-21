@@ -112,11 +112,10 @@ function ConvexSets() {
       <ul className="">
         {setListing.results.map(
           (setObj: { name: string; publishedOn: string; groupId: number }) => {
+            const publishedOn = dayjs(setObj.publishedOn)
+            const isUpcoming = publishedOn.isAfter(dayjs(), 'day')
             return (
-              <li
-                key={setObj.groupId}
-                className="list-disc ml-8 my-2"
-              >
+              <li key={setObj.groupId} className="list-disc ml-8 my-2">
                 <Link
                   to="/products/$groupId"
                   params={{ groupId: setObj.groupId.toString() }}
@@ -125,7 +124,10 @@ function ConvexSets() {
                 >
                   {setObj.name}
                 </Link>
-                (Released: {dayjs(setObj.publishedOn).format('MMM DD, YYYY')})
+                <span className={`ml-1 ${isUpcoming ? 'text-red-600' : ''}`}>
+                  ({isUpcoming ? 'To Be Released' : 'Released'}:{' '}
+                  {publishedOn.format('MMM DD, YYYY')})
+                </span>
               </li>
             )
           },
