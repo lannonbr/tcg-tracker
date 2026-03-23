@@ -1,7 +1,13 @@
 import { v } from 'convex/values'
 import { ActionCache } from '@convex-dev/action-cache'
 import { api, components, internal } from './_generated/api'
-import { action, internalAction, internalMutation, mutation, query } from './_generated/server'
+import {
+  action,
+  internalAction,
+  internalMutation,
+  mutation,
+  query,
+} from './_generated/server'
 import type { Doc } from './_generated/dataModel'
 
 type PriceData = {
@@ -92,10 +98,12 @@ export const internalFetchProducts = internalAction({
     const prices: Array<PriceData> = pricesData.results
     const pricesMap = new Map(prices.map((price) => [price.productId, price]))
 
-    const products: Array<ProductData> = productsData.results.map((product: any) => ({
-      ...product,
-      prices: pricesMap.get(product.productId),
-    }))
+    const products: Array<ProductData> = productsData.results.map(
+      (product: any) => ({
+        ...product,
+        prices: pricesMap.get(product.productId),
+      }),
+    )
 
     const blob = new Blob([JSON.stringify(products)], {
       type: 'application/json',

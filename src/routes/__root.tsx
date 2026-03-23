@@ -40,7 +40,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
-        <script dangerouslySetInnerHTML={{ __html: `window.__ENV__ = ${JSON.stringify(env)}` }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__ENV__ = ${JSON.stringify(env)}`,
+          }}
+        />
       </head>
       <body>
         <ConvexProvider>

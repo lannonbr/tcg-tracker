@@ -31,7 +31,8 @@ function SortHeaderButton({
   onClick: () => void
   sort: false | 'asc' | 'desc'
 }) {
-  const Icon = sort === 'asc' ? ArrowUp : sort === 'desc' ? ArrowDown : ArrowUpDown
+  const Icon =
+    sort === 'asc' ? ArrowUp : sort === 'desc' ? ArrowDown : ArrowUpDown
 
   return (
     <button

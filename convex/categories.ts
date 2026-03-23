@@ -85,9 +85,13 @@ export const fetchCategories = action({
     if (args.forceRefresh) {
       await categoriesCache.remove(ctx, {})
     }
-    await categoriesCache.fetch(ctx, {}, {
-      force: args.forceRefresh,
-    })
+    await categoriesCache.fetch(
+      ctx,
+      {},
+      {
+        force: args.forceRefresh,
+      },
+    )
   },
 })
 

@@ -6,7 +6,8 @@ let convexQueryClient: ConvexQueryClient | null = null
 function getConvexQueryClient() {
   if (!convexQueryClient) {
     const CONVEX_URL =
-      (window as any).__ENV__?.CONVEX_URL || (import.meta as any).env.VITE_CONVEX_URL
+      (window as any).__ENV__?.CONVEX_URL ||
+      (import.meta as any).env.VITE_CONVEX_URL
     if (!CONVEX_URL) {
       console.error('missing envar CONVEX_URL')
     }
@@ -25,8 +26,6 @@ export default function AppConvexProvider({
   }
   const client = getConvexQueryClient()
   return (
-    <ConvexProvider client={client.convexClient}>
-      {children}
-    </ConvexProvider>
+    <ConvexProvider client={client.convexClient}>{children}</ConvexProvider>
   )
 }
