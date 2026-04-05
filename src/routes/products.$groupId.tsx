@@ -51,6 +51,7 @@ function createColumns(
         />
       ),
       enableSorting: true,
+      filterFn: 'fuzzy',
       cell: ({ row }) => (
         <ProductHoverPreview
           imageUrl={row.original.imageUrl}
@@ -325,7 +326,7 @@ function RouteComponent() {
 
       <h2 className="text-2xl font-bold mb-4">Products</h2>
 
-      <DataTable columns={columns} data={tableData} />
+      <DataTable columns={columns} data={tableData} filterColumnId="name" />
 
       <TrackSidebar
         product={selectedProduct}

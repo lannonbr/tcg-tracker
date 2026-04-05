@@ -71,7 +71,7 @@ export const checkPricesAndNotify = internalAction({
       for (const trackedProduct of products) {
         const productData = productsMap.get(trackedProduct.productId)
         const marketPrice = productData?.prices?.marketPrice
-        if (marketPrice === undefined || marketPrice === null) continue
+        if (marketPrice === undefined) continue
         if (marketPrice <= trackedProduct.requestedPrice) {
           alertEmbeds.push({
             title: trackedProduct.productName,
