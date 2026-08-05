@@ -213,6 +213,11 @@ function RouteComponent() {
     (trackedProducts ?? []).map((t) => [t.productId, t]),
   )
 
+  const pinnedTableData = [
+    ...tableData.filter((product) => trackedMap.has(product.productId)),
+    ...tableData.filter((product) => !trackedMap.has(product.productId)),
+  ]
+
   const columns = createColumns(
     (product) => setSelectedProduct(product),
     trackedMap,
@@ -326,7 +331,11 @@ function RouteComponent() {
 
       <h2 className="text-2xl font-bold mb-4">Products</h2>
 
-      <DataTable columns={columns} data={tableData} filterColumnId="name" />
+      <DataTable
+        columns={columns}
+        data={pinnedTableData}
+        filterColumnId="name"
+      />
 
       <TrackSidebar
         product={selectedProduct}
