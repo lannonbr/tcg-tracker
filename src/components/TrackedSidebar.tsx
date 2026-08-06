@@ -9,7 +9,7 @@ type ProductRow = {
   productId: number
   name: string
   cardNumber: string
-  imageUrl: string
+  imageUrl: string | null
   url: string
   marketPrice: number | null
 }
@@ -105,11 +105,13 @@ export function TrackSidebar({
 
         {product && (
           <div className="flex flex-col gap-4 p-4 overflow-y-auto">
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              className="w-full rounded-lg object-contain"
-            />
+            {product.imageUrl ? (
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                className="w-full rounded-lg object-contain"
+              />
+            ) : null}
             <div>
               <p className="text-xs text-muted-foreground">Market Price</p>
               <p className="text-2xl font-bold text-primary">

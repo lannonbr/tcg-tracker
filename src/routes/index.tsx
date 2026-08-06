@@ -6,6 +6,7 @@ import type { Doc } from 'convex/_generated/dataModel'
 import type { ColumnDef } from '@tanstack/react-table'
 import { DataTable, SortHeaderButton } from '@/components/data-table'
 import { ProductHoverPreview } from '@/components/ProductHoverPreview'
+import { TrackSidebar } from '@/components/TrackedSidebar'
 
 export const Route = createFileRoute('/')({ component: App, ssr: false })
 
@@ -19,85 +20,105 @@ type TrackedCardRow = Doc<'trackedProducts'> & {
   imageUrl: string | null
 }
 
-const columns: Array<ColumnDef<TrackedCardRow>> = [
-  {
-    accessorKey: 'productName',
-    header: ({ column }) => (
-      <SortHeaderButton
-        label="Name"
-        sort={column.getIsSorted()}
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      />
-    ),
-    enableSorting: true,
-    cell: ({ row }) => (
-      <ProductHoverPreview
-        imageUrl={row.original.imageUrl}
-        name={row.getValue<string>('productName')}
-      >
-        <span className="font-medium">
-          {row.getValue<string>('productName')}
-        </span>
-      </ProductHoverPreview>
-    ),
-  },
-  {
-    accessorKey: 'groupName',
-    header: ({ column }) => (
-      <SortHeaderButton
-        label="Set"
-        sort={column.getIsSorted()}
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      />
-    ),
-    enableSorting: true,
-    cell: ({ row }) => (
-      <Link
-        to="/products/$groupId"
-        params={{ groupId: String(row.original.groupId) }}
-        search={{ categoryId: row.original.categoryId }}
-        className="text-blue-600 hover:underline dark:text-blue-400"
-      >
-        {row.getValue<string>('groupName')}
-      </Link>
-    ),
-  },
-  {
-    accessorKey: 'marketPrice',
-    header: ({ column }) => (
-      <SortHeaderButton
-        label="Market Price"
-        sort={column.getIsSorted()}
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      />
-    ),
-    enableSorting: true,
-    sortingFn: (rowA, rowB, columnId) => {
-      const a =
-        rowA.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
-      const b =
-        rowB.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
-      return a - b
+function createColumns(
+  onEdit: (card: TrackedCardRow) => void,
+): Array<ColumnDef<TrackedCardRow>> {
+  return [
+    {
+      accessorKey: 'productName',
+      header: ({ column }) => (
+        <SortHeaderButton
+          label="Name"
+          sort={column.getIsSorted()}
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        />
+      ),
+      enableSorting: true,
+      cell: ({ row }) => (
+        <ProductHoverPreview
+          imageUrl={row.original.imageUrl}
+          name={row.getValue<string>('productName')}
+        >
+          <span className="font-medium">
+            {row.getValue<string>('productName')}
+          </span>
+        </ProductHoverPreview>
+      ),
     },
-    cell: ({ row }) => {
-      const price = row.getValue<number | null>('marketPrice')
-      return price !== null ? currencyFormatter.format(price) : '—'
+    {
+      accessorKey: 'groupName',
+      header: ({ column }) => (
+        <SortHeaderButton
+          label="Set"
+          sort={column.getIsSorted()}
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        />
+      ),
+      enableSorting: true,
+      cell: ({ row }) => (
+        <Link
+          to="/products/$groupId"
+          params={{ groupId: String(row.original.groupId) }}
+          search={{ categoryId: row.original.categoryId }}
+          className="text-blue-600 hover:underline dark:text-blue-400"
+        >
+          {row.getValue<string>('groupName')}
+        </Link>
+      ),
     },
-  },
-  {
-    accessorKey: 'requestedPrice',
-    header: ({ column }) => (
-      <SortHeaderButton
-        label="Requested Price"
-        sort={column.getIsSorted()}
-        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-      />
-    ),
-    enableSorting: true,
-    cell: ({ row }) =>
-      currencyFormatter.format(row.getValue<number>('requestedPrice')),
-  },
-]
+    {
+      accessorKey: 'marketPrice',
+      header: ({ column }) => (
+        <SortHeaderButton
+          label="Market Price"
+          sort={column.getIsSorted()}
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        />
+      ),
+      enableSorting: true,
+      sortingFn: (rowA, rowB, columnId) => {
+        const a =
+          rowA.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
+        const b =
+          rowB.getValue<number | null>(columnId) ?? Number.NEGATIVE_INFINITY
+        return a - b
+      },
+      cell: ({ row }) => {
+        const price = row.getValue<number | null>('marketPrice')
+        return price !== null ? currencyFormatter.format(price) : '—'
+      },
+    },
+    {
+      accessorKey: 'requestedPrice',
+      header: ({ column }) => (
+        <SortHeaderButton
+          label="Requested Price"
+          sort={column.getIsSorted()}
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        />
+      ),
+      enableSorting: true,
+      cell: ({ row }) =>
+        currencyFormatter.format(row.getValue<number>('requestedPrice')),
+    },
+    {
+      id: 'actions',
+      header: '',
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="text-right">
+          <button
+            type="button"
+            onClick={() => onEdit(row.original)}
+            className="rounded-md border border-primary px-3 py-1 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          >
+            Edit
+          </button>
+        </div>
+      ),
+    },
+  ]
+}
 
 function TrackedCardsTable() {
   const trackedProducts = useQuery(api.trackedProducts.getTrackedProducts)
@@ -105,6 +126,7 @@ function TrackedCardsTable() {
   const [productDetails, setProductDetails] = useState<
     Map<number, { marketPrice: number | null; imageUrl: string | null }>
   >(new Map())
+  const [selectedCard, setSelectedCard] = useState<TrackedCardRow | null>(null)
 
   useEffect(() => {
     if (!trackedProducts?.length) return
@@ -162,7 +184,31 @@ function TrackedCardsTable() {
     imageUrl: productDetails.get(p.productId)?.imageUrl ?? null,
   }))
 
-  return <DataTable columns={columns} data={tableData} />
+  return (
+    <>
+      <DataTable columns={createColumns(setSelectedCard)} data={tableData} />
+      <TrackSidebar
+        product={
+          selectedCard
+            ? {
+                productId: selectedCard.productId,
+                name: selectedCard.productName,
+                cardNumber: '',
+                imageUrl: selectedCard.imageUrl,
+                url: '',
+                marketPrice: selectedCard.marketPrice,
+              }
+            : null
+        }
+        existingRecord={selectedCard}
+        categoryId={selectedCard?.categoryId ?? 0}
+        groupId={selectedCard?.groupId ?? 0}
+        groupName={selectedCard?.groupName ?? ''}
+        categoryName={selectedCard?.categoryName ?? ''}
+        onClose={() => setSelectedCard(null)}
+      />
+    </>
+  )
 }
 
 function App() {
