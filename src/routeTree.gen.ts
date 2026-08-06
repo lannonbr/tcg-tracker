@@ -10,13 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProductsGroupIdRouteImport } from './routes/products.$groupId'
 import { Route as SetsIndexRouteImport } from './routes/sets.index'
 import { Route as SetsCategoryIdRouteImport } from './routes/sets.$categoryId'
-import { Route as ProductsGroupIdRouteImport } from './routes/products.$groupId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsGroupIdRoute = ProductsGroupIdRouteImport.update({
+  id: '/products/$groupId',
+  path: '/products/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetsIndexRoute = SetsIndexRouteImport.update({
@@ -27,11 +32,6 @@ const SetsIndexRoute = SetsIndexRouteImport.update({
 const SetsCategoryIdRoute = SetsCategoryIdRouteImport.update({
   id: '/sets/$categoryId',
   path: '/sets/$categoryId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductsGroupIdRoute = ProductsGroupIdRouteImport.update({
-  id: '/products/$groupId',
-  path: '/products/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -78,6 +78,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/products/$groupId': {
+      id: '/products/$groupId'
+      path: '/products/$groupId'
+      fullPath: '/products/$groupId'
+      preLoaderRoute: typeof ProductsGroupIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sets/': {
       id: '/sets/'
       path: '/sets'
@@ -90,13 +97,6 @@ declare module '@tanstack/react-router' {
       path: '/sets/$categoryId'
       fullPath: '/sets/$categoryId'
       preLoaderRoute: typeof SetsCategoryIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/products/$groupId': {
-      id: '/products/$groupId'
-      path: '/products/$groupId'
-      fullPath: '/products/$groupId'
-      preLoaderRoute: typeof ProductsGroupIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
