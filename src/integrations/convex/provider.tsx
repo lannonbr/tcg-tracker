@@ -7,6 +7,7 @@ function getConvexQueryClient() {
   if (!convexQueryClient) {
     const CONVEX_URL =
       (window as any).__ENV__?.CONVEX_URL ||
+      (window as any).__ENV__?.CONVEX_CLOUD_URL ||
       (import.meta as any).env.VITE_CONVEX_URL
     if (!CONVEX_URL) {
       console.error('missing envar CONVEX_URL')
