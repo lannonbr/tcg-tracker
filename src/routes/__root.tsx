@@ -33,7 +33,7 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const env = {
-    CONVEX_URL: process.env.CONVEX_URL ?? '',
+    CONVEX_URL: (process.env.CONVEX_URL || process.env.CONVEX_CLOUD_URL) ?? '',
     CONVEX_SITE_URL: process.env.CONVEX_SITE_URL ?? '',
   }
   return (
