@@ -8,7 +8,7 @@ This is a React application that wraps the [TCGCSV](https://tcgcsv.com) data tha
 
 First install the node modules with `npm install`.
 
-If you wish to run a self-hosted Convex backend, run the docker compose file in the `convex-backend` folder.
+You will need to run a convex database either with their [hosted platform](https://www.convex.dev/) or by self hosting it. If you wish to run a self-hosted Convex backend in Docker Compose, run the docker compose file in the `convex-backend` folder. I also have a helm chart for Convex at https://github.com/lannonbr/convex-kubernetes
 
 Examine the .env.example file for the environment vars that I use. The env vars may differ if you use the Convex hosted platform vs self hosting it.
 
@@ -24,4 +24,10 @@ To build this application for production, run `npm run build` and it will genera
 
 Then when running the app, set the `CONVEX_URL` and `CONVEX_SITE_URL` env variables to point to Convex (No `VITE_` prefix as that would require the vars to be set at build time while this allows them to be set at runtime).
 
-> **Note**: As of right now there is no auth layer for convex, but I have deployed this via my internal network so I did not need any for now. If you wish to deploy this app to the public internet, you probably may want to have an auth layer / rate limiting such that Convex is not sent a huge amount of requests by a malicious actor.
+## Kubernetes
+
+If you wish to deploy this to a Kubernetes cluster, I have a helm chart in the `helm` directory. Do note it uses `tailscale` as the default ingress so some additional tweaks are needed if you wish to use another ingress controller.
+
+## Notices
+
+> **Note**: As of right now there is no auth layer for convex. I deployed this app on my internal network so I currently am fine with such. If you wish to deploy this app to the public internet, you will want to have an auth layer / rate limiting such that Convex is not sent a huge amount of requests by a malicious actor.

@@ -1,0 +1,5 @@
+apiVersion: v2
+appVersion: default
+description: Helm Chart for TCG Tracker
+name: tcg-tracker
+version: 1.0.0
