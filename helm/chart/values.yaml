@@ -1,0 +1,11 @@
+image:
+  tag: main
+
+ingress:
+  ingressClassName: tailscale
+  hostName: tcg-tracker
+  tls:
+    enabled: true
+
+convexUrl: "" # Required. Set via --set
+convexSiteUrl: "" # Required. Set via --set

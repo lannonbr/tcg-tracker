@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "%s-%s" .Release.Name "tcg-tracker" | trunc 63 }}
+  labels:
+    app: tcg-tracker
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tcg-tracker
+  template:
+    metadata:
+      labels:
+        app: tcg-tracker
+    spec:
+      containers:
+        - name: tcg-tracker
+          image: ghcr.io/lannonbr/tcg-tracker:{{ .Values.image.tag }}
+          env:
+            # Convex default URLs: https://docs.convex.dev/production/environment-variables#system-environment-variables
+            # If using hosted Convex, CONVEX_URL will need to be changed to CONVEX_CLOUD_URL
+            - name: CONVEX_URL
+              value: {{ .Values.convexUrl | required "The Convex Backend URL is required" }}
+            - name: CONVEX_SITE_URL
+              value: {{ .Values.convexSiteUrl | required "The Convex Site URL is required" }}
