@@ -1,10 +1,17 @@
 import { Link } from '@tanstack/react-router'
 
-import { useState } from 'react'
-import { Home, Menu, Settings, Table, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useQuery } from 'convex/react'
+import { Home, Menu, Pin, Settings, Table, X } from 'lucide-react'
+import { api } from 'convex/_generated/api'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
 
   return (
     <>
@@ -66,6 +73,10 @@ export default function Header() {
             <span className="font-medium">Sets</span>
           </Link>
 
+          {isHydrated ? (
+            <PinnedGames onNavigate={() => setIsOpen(false)} />
+          ) : null}
+
           <Link
             to="/settings"
             onClick={() => setIsOpen(false)}
@@ -81,5 +92,36 @@ export default function Header() {
         </nav>
       </aside>
     </>
+  )
+}
+
+function PinnedGames({ onNavigate }: { onNavigate: () => void }) {
+  const settings = useQuery(api.settings.get)
+  const pinnedGames = settings?.pinnedGames ?? []
+
+  if (pinnedGames.length === 0) return null
+
+  return (
+    <div className="mb-4 mt-5 border-t border-violet-700 pt-4">
+      <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-violet-300">
+        Pinned games
+      </p>
+      {pinnedGames.map((game) => (
+        <Link
+          key={game.categoryId}
+          to="/sets/$categoryId"
+          params={{ categoryId: game.categoryId.toString() }}
+          onClick={onNavigate}
+          className="flex items-center gap-3 rounded-lg p-3 text-sm hover:bg-violet-800 transition-colors"
+          activeProps={{
+            className:
+              'flex items-center gap-3 rounded-lg bg-violet-600 p-3 text-sm hover:bg-violet-500 transition-colors',
+          }}
+        >
+          <Pin size={16} aria-hidden="true" />
+          <span className="min-w-0 truncate font-medium">{game.name}</span>
+        </Link>
+      ))}
+    </div>
   )
 }

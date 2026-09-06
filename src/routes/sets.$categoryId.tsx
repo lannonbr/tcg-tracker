@@ -1,8 +1,9 @@
 import { Link, createFileRoute, useParams } from '@tanstack/react-router'
 import { api } from 'convex/_generated/api'
-import { useAction } from 'convex/react'
+import { useAction, useMutation, useQuery } from 'convex/react'
 import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
+import { Pin, PinOff } from 'lucide-react'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,11 +22,15 @@ function ConvexSets() {
   const { categoryId } = useParams({ from: '/sets/$categoryId' })
 
   const action = useAction(api.sets.fetchSetUrl)
+  const settings = useQuery(api.settings.get)
+  const pinGame = useMutation(api.settings.pinGame)
+  const unpinGame = useMutation(api.settings.unpinGame)
 
   const [set, setSet] = useState<Array<any> | null>(null)
   const [fileUrl, setFileUrl] = useState<string | null>(null)
   const [setListing, setSetListing] = useState<Record<string, any> | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isUpdatingPin, setIsUpdatingPin] = useState(false)
   const [refreshError, setRefreshError] = useState<string | null>(null)
 
   const loadSets = async (forceRefresh = false) => {
@@ -71,6 +76,25 @@ function ConvexSets() {
   if (!fileUrl) return <div>Loading URL...</div>
   if (!setListing) return <div>Loading file...</div>
 
+  const isPinned = (settings?.pinnedGames ?? []).some(
+    (game) => game.categoryId === Number(categoryId),
+  )
+
+  const togglePin = async () => {
+    setIsUpdatingPin(true)
+    try {
+      if (isPinned) {
+        await unpinGame({ categoryId: Number(categoryId) })
+      } else {
+        await pinGame({
+          game: { categoryId: Number(categoryId), name: set[0].name },
+        })
+      }
+    } finally {
+      setIsUpdatingPin(false)
+    }
+  }
+
   return (
     <div className="container mx-auto p-6">
       <Breadcrumb className="mb-4">
@@ -101,10 +125,26 @@ function ConvexSets() {
 
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 className="text-2xl font-bold">Sets for {set[0].name}</h2>
-        <RefreshButton
-          onClick={() => void loadSets(true)}
-          isRefreshing={isRefreshing}
-        />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void togglePin()}
+            disabled={isUpdatingPin}
+            aria-label={isPinned ? 'Unpin game' : 'Pin game'}
+            title={isPinned ? 'Unpin game' : 'Pin game'}
+            className="inline-flex h-9 items-center justify-center rounded-md border border-primary px-3 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPinned ? (
+              <PinOff className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Pin className="h-4 w-4" aria-hidden="true" />
+            )}
+          </button>
+          <RefreshButton
+            onClick={() => void loadSets(true)}
+            isRefreshing={isRefreshing}
+          />
+        </div>
       </div>
       {refreshError ? (
         <p className="mb-4 text-sm text-destructive">{refreshError}</p>

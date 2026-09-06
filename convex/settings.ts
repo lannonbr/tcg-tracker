@@ -25,6 +25,11 @@ const settingsValidator = v.object({
   priceCheckSchedule: localScheduleValidator,
 })
 
+const pinnedGameValidator = v.object({
+  categoryId: v.number(),
+  name: v.string(),
+})
+
 type PriceCheckSchedule = typeof DEFAULT_PRICE_CHECK_SCHEDULE
 type LocalPriceCheckSchedule = {
   weekdays: Array<number>
@@ -134,8 +139,16 @@ export const ensureDefaultSettings = internalMutation({
       await registerPriceCheckCron(ctx, schedule)
     }
 
-    if (existingSettings) return existingSettings._id
-    return await ctx.db.insert('settings', { priceCheckSchedule: schedule })
+    if (existingSettings) {
+      if (!existingSettings.pinnedGames) {
+        await ctx.db.patch(existingSettings._id, { pinnedGames: [] })
+      }
+      return existingSettings._id
+    }
+    return await ctx.db.insert('settings', {
+      priceCheckSchedule: schedule,
+      pinnedGames: [],
+    })
   },
 })
 
@@ -155,6 +168,84 @@ export const saveSettings = mutation({
       await ctx.db.patch(existingSettings._id, { priceCheckSchedule: schedule })
       return existingSettings._id
     }
-    return await ctx.db.insert('settings', { priceCheckSchedule: schedule })
+    return await ctx.db.insert('settings', {
+      priceCheckSchedule: schedule,
+      pinnedGames: [],
+    })
+  },
+})
+
+export const pinGame = mutation({
+  args: { game: pinnedGameValidator },
+  handler: async (ctx, { game }) => {
+    const existingSettings = await ctx.db.query('settings').first()
+
+    if (!existingSettings) {
+      const schedule = DEFAULT_PRICE_CHECK_SCHEDULE
+      const existingCron = await crons.get(ctx, { name: PRICE_CHECK_CRON_NAME })
+      if (!existingCron) {
+        await registerPriceCheckCron(ctx, schedule)
+      }
+      return await ctx.db.insert('settings', {
+        priceCheckSchedule: schedule,
+        pinnedGames: [game],
+      })
+    }
+
+    const pinnedGames = existingSettings.pinnedGames ?? []
+    if (
+      pinnedGames.some(
+        (pinnedGame) => pinnedGame.categoryId === game.categoryId,
+      )
+    ) {
+      return existingSettings._id
+    }
+
+    await ctx.db.patch(existingSettings._id, {
+      pinnedGames: [...pinnedGames, game],
+    })
+    return existingSettings._id
+  },
+})
+
+export const unpinGame = mutation({
+  args: { categoryId: v.number() },
+  handler: async (ctx, { categoryId }) => {
+    const settings = await ctx.db.query('settings').first()
+    if (!settings) return null
+
+    await ctx.db.patch(settings._id, {
+      pinnedGames: (settings.pinnedGames ?? []).filter(
+        (game) => game.categoryId !== categoryId,
+      ),
+    })
+    return settings._id
+  },
+})
+
+export const movePinnedGame = mutation({
+  args: {
+    categoryId: v.number(),
+    direction: v.union(v.literal('up'), v.literal('down')),
+  },
+  handler: async (ctx, { categoryId, direction }) => {
+    const settings = await ctx.db.query('settings').first()
+    if (!settings) return null
+
+    const pinnedGames = [...(settings.pinnedGames ?? [])]
+    const index = pinnedGames.findIndex(
+      (game) => game.categoryId === categoryId,
+    )
+    const nextIndex = direction === 'up' ? index - 1 : index + 1
+
+    if (index === -1 || nextIndex < 0 || nextIndex >= pinnedGames.length) {
+      return settings._id
+    }
+
+    const gameToMove = pinnedGames[index]
+    pinnedGames[index] = pinnedGames[nextIndex]
+    pinnedGames[nextIndex] = gameToMove
+    await ctx.db.patch(settings._id, { pinnedGames })
+    return settings._id
   },
 })

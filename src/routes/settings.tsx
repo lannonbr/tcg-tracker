@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from 'convex/react'
-import { BellRing, Check, LoaderCircle, Save } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  BellRing,
+  Check,
+  LoaderCircle,
+  Pin,
+  Save,
+  Trash2,
+} from 'lucide-react'
 import { api } from 'convex/_generated/api'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
@@ -54,11 +63,17 @@ function scheduleFromUTC(schedule: {
 function SettingsPage() {
   const settings = useQuery(api.settings.get)
   const saveSettingsMutation = useMutation(api.settings.saveSettings)
+  const movePinnedGame = useMutation(api.settings.movePinnedGame)
+  const unpinGame = useMutation(api.settings.unpinGame)
   const [selectedDays, setSelectedDays] = useState<Array<string>>([])
   const [time, setTime] = useState('20:30')
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [updatingPinnedGameId, setUpdatingPinnedGameId] = useState<
+    number | null
+  >(null)
+  const [pinnedGameError, setPinnedGameError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!settings) return
@@ -111,6 +126,27 @@ function SettingsPage() {
       setIsSaving(false)
     }
   }
+
+  async function updatePinnedGame(
+    categoryId: number,
+    update: () => Promise<unknown>,
+  ) {
+    setUpdatingPinnedGameId(categoryId)
+    setPinnedGameError(null)
+    try {
+      await update()
+    } catch (error) {
+      setPinnedGameError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to update pinned games.',
+      )
+    } finally {
+      setUpdatingPinnedGameId(null)
+    }
+  }
+
+  const pinnedGames = settings?.pinnedGames ?? []
 
   return (
     <main className="min-h-[calc(100vh-72px)] bg-linear-to-b from-violet-100 via-purple-50 to-white">
@@ -231,6 +267,117 @@ function SettingsPage() {
                   {isSaving ? 'Saving…' : saved ? 'Saved' : 'Save'}
                 </button>
               </div>
+            </div>
+          )}
+        </section>
+
+        <section
+          className="mt-6 overflow-hidden rounded-xl border bg-card shadow-sm"
+          aria-labelledby="pinned-games-heading"
+        >
+          <div className="flex items-start gap-4 border-b bg-muted/30 px-6 py-5">
+            <div className="rounded-lg bg-violet-100 p-2.5 text-violet-700">
+              <Pin className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 id="pinned-games-heading" className="font-semibold">
+                Pinned games
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Choose the order games appear in the navigation menu.
+              </p>
+            </div>
+          </div>
+
+          {!settings ? (
+            <div
+              className="flex items-center gap-2 px-6 py-8 text-sm text-muted-foreground"
+              role="status"
+            >
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+              Loading pinned games…
+            </div>
+          ) : pinnedGames.length === 0 ? (
+            <p className="px-6 py-8 text-sm text-muted-foreground">
+              Pin a game from its sets page to add it here.
+            </p>
+          ) : (
+            <div className="p-4 sm:p-6">
+              <ol className="divide-y rounded-lg border">
+                {pinnedGames.map((game, index) => {
+                  const isUpdating = updatingPinnedGameId === game.categoryId
+                  return (
+                    <li
+                      key={game.categoryId}
+                      className="flex items-center gap-3 px-3 py-3 sm:px-4"
+                    >
+                      <span className="w-5 text-center text-sm tabular-nums text-muted-foreground">
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-medium">
+                        {game.name}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          aria-label={`Move ${game.name} up`}
+                          title="Move up"
+                          disabled={index === 0 || isUpdating}
+                          onClick={() =>
+                            void updatePinnedGame(game.categoryId, () =>
+                              movePinnedGame({
+                                categoryId: game.categoryId,
+                                direction: 'up',
+                              }),
+                            )
+                          }
+                          className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                        >
+                          <ArrowUp className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Move ${game.name} down`}
+                          title="Move down"
+                          disabled={
+                            index === pinnedGames.length - 1 || isUpdating
+                          }
+                          onClick={() =>
+                            void updatePinnedGame(game.categoryId, () =>
+                              movePinnedGame({
+                                categoryId: game.categoryId,
+                                direction: 'down',
+                              }),
+                            )
+                          }
+                          className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                        >
+                          <ArrowDown className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${game.name} from pinned games`}
+                          title="Remove pin"
+                          disabled={isUpdating}
+                          onClick={() =>
+                            void updatePinnedGame(game.categoryId, () =>
+                              unpinGame({ categoryId: game.categoryId }),
+                            )
+                          }
+                          className="rounded-md p-2 text-destructive transition-colors hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-40"
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ol>
+              {pinnedGameError ? (
+                <p className="mt-3 text-sm text-destructive" role="alert">
+                  {pinnedGameError}
+                </p>
+              ) : null}
             </div>
           )}
         </section>
