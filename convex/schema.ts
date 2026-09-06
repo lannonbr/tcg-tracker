@@ -37,4 +37,21 @@ export default defineSchema({
     categoryName: v.string(),
     requestedPrice: v.number(),
   }),
+  settings: defineTable({
+    priceCheckSchedule: v.object({
+      weekdays: v.array(v.number()),
+      hourUTC: v.number(),
+      minuteUTC: v.number(),
+    }),
+    // Optional so existing singleton documents remain valid until they are
+    // updated. New settings documents always include an empty list.
+    pinnedGames: v.optional(
+      v.array(
+        v.object({
+          categoryId: v.number(),
+          name: v.string(),
+        }),
+      ),
+    ),
+  }),
 })

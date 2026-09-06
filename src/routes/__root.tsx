@@ -32,10 +32,18 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const env = {
+  const serverEnv = {
     CONVEX_URL: (process.env.CONVEX_URL || process.env.CONVEX_CLOUD_URL) ?? '',
     CONVEX_SITE_URL: process.env.CONVEX_SITE_URL ?? '',
   }
+  // During hydration, the server-rendered bootstrap script has already run.
+  // Reuse its values instead of recomputing from browser-side process.env,
+  // which is intentionally empty in the client bundle.
+  const env =
+    typeof window === 'undefined'
+      ? serverEnv
+      : ((window as typeof window & { __ENV__?: typeof serverEnv }).__ENV__ ??
+        serverEnv)
   return (
     <html lang="en">
       <head>

@@ -9,10 +9,10 @@
  */
 
 import type * as categories from "../categories.js";
-import type * as crons from "../crons.js";
 import type * as notifications from "../notifications.js";
 import type * as products from "../products.js";
 import type * as sets from "../sets.js";
+import type * as settings from "../settings.js";
 import type * as trackedProducts from "../trackedProducts.js";
 
 import type {
@@ -23,10 +23,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   categories: typeof categories;
-  crons: typeof crons;
   notifications: typeof notifications;
   products: typeof products;
   sets: typeof sets;
+  settings: typeof settings;
   trackedProducts: typeof trackedProducts;
 }>;
 
@@ -58,4 +58,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   actionCache: import("@convex-dev/action-cache/_generated/component.js").ComponentApi<"actionCache">;
+  crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
 };
