@@ -37,4 +37,11 @@ export default defineSchema({
     categoryName: v.string(),
     requestedPrice: v.number(),
   }),
+  settings: defineTable({
+    priceCheckSchedule: v.object({
+      weekdays: v.array(v.number()),
+      hourUTC: v.number(),
+      minuteUTC: v.number(),
+    }),
+  }),
 })

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ProductsGroupIdRouteImport } from './routes/products.$groupId'
 import { Route as SetsIndexRouteImport } from './routes/sets.index'
 import { Route as SetsCategoryIdRouteImport } from './routes/sets.$categoryId'
@@ -17,6 +18,11 @@ import { Route as SetsCategoryIdRouteImport } from './routes/sets.$categoryId'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductsGroupIdRoute = ProductsGroupIdRouteImport.update({
@@ -37,12 +43,14 @@ const SetsCategoryIdRoute = SetsCategoryIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/products/$groupId': typeof ProductsGroupIdRoute
   '/sets/$categoryId': typeof SetsCategoryIdRoute
   '/sets/': typeof SetsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/products/$groupId': typeof ProductsGroupIdRoute
   '/sets/$categoryId': typeof SetsCategoryIdRoute
   '/sets': typeof SetsIndexRoute
@@ -50,20 +58,29 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/products/$groupId': typeof ProductsGroupIdRoute
   '/sets/$categoryId': typeof SetsCategoryIdRoute
   '/sets/': typeof SetsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/products/$groupId' | '/sets/$categoryId' | '/sets/'
+  fullPaths:
+    '/' | '/settings' | '/products/$groupId' | '/sets/$categoryId' | '/sets/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/products/$groupId' | '/sets/$categoryId' | '/sets'
-  id: '__root__' | '/' | '/products/$groupId' | '/sets/$categoryId' | '/sets/'
+  to: '/' | '/settings' | '/products/$groupId' | '/sets/$categoryId' | '/sets'
+  id:
+    | '__root__'
+    | '/'
+    | '/settings'
+    | '/products/$groupId'
+    | '/sets/$categoryId'
+    | '/sets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SettingsRoute: typeof SettingsRoute
   ProductsGroupIdRoute: typeof ProductsGroupIdRoute
   SetsCategoryIdRoute: typeof SetsCategoryIdRoute
   SetsIndexRoute: typeof SetsIndexRoute
@@ -76,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/products/$groupId': {
@@ -104,6 +128,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SettingsRoute: SettingsRoute,
   ProductsGroupIdRoute: ProductsGroupIdRoute,
   SetsCategoryIdRoute: SetsCategoryIdRoute,
   SetsIndexRoute: SetsIndexRoute,
