@@ -44,6 +44,10 @@ const timeOptions = Array.from({ length: 48 }, (_, index) => {
   }
 })
 
+const applicationVersion = import.meta.env.DEV
+  ? 'Development server'
+  : (import.meta.env.VITE_APP_VERSION || 'Unknown build')
+
 function scheduleFromUTC(schedule: {
   weekdays: Array<number>
   hourUTC: number
@@ -380,6 +384,20 @@ function SettingsPage() {
               ) : null}
             </div>
           )}
+        </section>
+
+        <section
+          className="mt-6 overflow-hidden rounded-xl border bg-card shadow-sm"
+          aria-labelledby="application-version-heading"
+        >
+          <div className="px-6 py-5">
+            <h2 id="application-version-heading" className="font-semibold">
+              Application version
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {applicationVersion}
+            </p>
+          </div>
         </section>
       </div>
     </main>
