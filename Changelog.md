@@ -1,5 +1,9 @@
 # TCG Tracker Changelog
 
+## Upcoming features
+
+- View the app version in the /settings page
+
 ## 1.0.0 (September 7, 2026)
 
 - Initial tagged version
