@@ -18,6 +18,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
 type TrackedCardRow = Doc<'trackedProducts'> & {
   marketPrice: number | null
   imageUrl: string | null
+  url: string | null
 }
 
 function createColumns(
@@ -65,6 +66,24 @@ function createColumns(
           {row.getValue<string>('groupName')}
         </Link>
       ),
+    },
+    {
+      accessorKey: 'url',
+      header: 'Link',
+      enableSorting: false,
+      cell: ({ row }) => {
+        const url = row.getValue<string | null>('url')
+        return url ? (
+          <a
+            href={url}
+            className="text-blue-600 hover:underline dark:text-blue-400"
+          >
+            TCGPlayer
+          </a>
+        ) : (
+          '—'
+        )
+      },
     },
     {
       accessorKey: 'marketPrice',
@@ -124,7 +143,10 @@ function TrackedCardsTable() {
   const trackedProducts = useQuery(api.trackedProducts.getTrackedProducts)
   const fetchProducts = useAction(api.products.fetchProducts)
   const [productDetails, setProductDetails] = useState<
-    Map<number, { marketPrice: number | null; imageUrl: string | null }>
+    Map<
+      number,
+      { marketPrice: number | null; imageUrl: string | null; url: string | null }
+    >
   >(new Map())
   const [selectedCard, setSelectedCard] = useState<TrackedCardRow | null>(null)
 
@@ -139,7 +161,7 @@ function TrackedCardsTable() {
     const loadPrices = async () => {
       const detailMap = new Map<
         number,
-        { marketPrice: number | null; imageUrl: string | null }
+        { marketPrice: number | null; imageUrl: string | null; url: string | null }
       >()
       for (const [groupId, categoryId] of groups) {
         const { data } = await fetchProducts({ categoryId, groupId })
@@ -147,12 +169,14 @@ function TrackedCardsTable() {
         const products: Array<{
           productId: number
           imageUrl: string
+          url: string
           prices?: { marketPrice: number }
         }> = data
         for (const product of products) {
           detailMap.set(product.productId, {
             marketPrice: product.prices?.marketPrice ?? null,
             imageUrl: product.imageUrl,
+            url: product.url,
           })
         }
       }
@@ -182,6 +206,7 @@ function TrackedCardsTable() {
     ...p,
     marketPrice: productDetails.get(p.productId)?.marketPrice ?? null,
     imageUrl: productDetails.get(p.productId)?.imageUrl ?? null,
+    url: productDetails.get(p.productId)?.url ?? null,
   }))
 
   return (
@@ -195,7 +220,7 @@ function TrackedCardsTable() {
                 name: selectedCard.productName,
                 cardNumber: '',
                 imageUrl: selectedCard.imageUrl,
-                url: '',
+                url: selectedCard.url ?? '',
                 marketPrice: selectedCard.marketPrice,
               }
             : null
